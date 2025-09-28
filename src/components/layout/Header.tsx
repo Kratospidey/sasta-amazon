@@ -27,10 +27,12 @@ const Header = () => {
             <Menu className="h-5 w-5" />
           </Button>
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Gamepad2 className="h-5 w-5 text-primary-foreground" />
+            <div className="w-8 h-8 bg-gradient-to-r from-primary to-accent rounded-lg flex items-center justify-center">
+              <Gamepad2 className="h-5 w-5 text-white" />
             </div>
-            <span className="text-xl font-bold hidden sm:inline">GameHub</span>
+            <span className="text-xl font-bold hidden sm:inline bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              GameVault
+            </span>
           </Link>
         </div>
 
@@ -46,12 +48,16 @@ const Header = () => {
               Library
             </Button>
           </Link>
-          <Button variant="ghost" className="text-foreground hover:text-primary">
-            Community
-          </Button>
-          <Button variant="ghost" className="text-foreground hover:text-primary">
-            Support
-          </Button>
+          <Link to="/community">
+            <Button variant="ghost" className="text-foreground hover:text-primary">
+              Community
+            </Button>
+          </Link>
+          <Link to="/support">
+            <Button variant="ghost" className="text-foreground hover:text-primary">
+              Support
+            </Button>
+          </Link>
         </nav>
 
         {/* Search */}
@@ -67,25 +73,31 @@ const Header = () => {
 
         {/* User Actions */}
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm" className="hidden sm:flex">
-            <Bell className="h-4 w-4" />
-          </Button>
+          <Link to="/notifications">
+            <Button variant="ghost" size="sm" className="hidden sm:flex">
+              <Bell className="h-4 w-4" />
+            </Button>
+          </Link>
           
-          <Button variant="ghost" size="sm" className="relative">
-            <ShoppingCart className="h-4 w-4" />
-            {cartCount > 0 && (
-              <Badge 
-                variant="destructive" 
-                className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
-              >
-                {cartCount}
-              </Badge>
-            )}
-          </Button>
+          <Link to="/cart">
+            <Button variant="ghost" size="sm" className="relative">
+              <ShoppingCart className="h-4 w-4" />
+              {cartCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {cartCount}
+                </Badge>
+              )}
+            </Button>
+          </Link>
 
-          <Button variant="ghost" size="sm">
-            <User className="h-4 w-4" />
-          </Button>
+          <Link to="/profile">
+            <Button variant="ghost" size="sm">
+              <User className="h-4 w-4" />
+            </Button>
+          </Link>
 
           <Button variant="default" size="sm" className="hidden sm:inline-flex">
             Login

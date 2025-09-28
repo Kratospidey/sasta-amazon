@@ -12,9 +12,6 @@ const Index = () => {
       <ScrollingBanner />
       
       <main className="container mx-auto px-4 py-8">
-        {/* Search Bar */}
-        <SearchBar />
-
         {/* Hero Banner */}
         <section className="mb-12">
           <HeroBanner />
