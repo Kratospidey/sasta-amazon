@@ -1,6 +1,6 @@
 import GameCard from "./GameCard";
 import eldenRingCover from "@/assets/elden-ring-cover.png";
-import game2 from "@/assets/game-2.jpg";
+import genshinImpactCover from "@/assets/genshin-impact-cover.png";
 import game3 from "@/assets/game-3.jpg";
 import game4 from "@/assets/game-4.jpg";
 import game5 from "@/assets/game-5.jpg";
@@ -23,13 +23,13 @@ const GameGrid = () => {
     },
     {
       id: "2", 
-      title: "Cosmic Warfare",
-      developer: "Sci-Fi Games",
-      image: game2,
-      price: 49.99,
+      title: "Genshin Impact",
+      developer: "HoYoverse",
+      image: genshinImpactCover,
+      price: 0,
       rating: 4.6,
-      reviewCount: 8930,
-      tags: ["Shooter", "Sci-Fi"],
+      reviewCount: 890000,
+      tags: ["RPG", "Anime"],
       featured: true,
     },
     {
@@ -80,7 +80,7 @@ const GameGrid = () => {
       id: "7",
       title: "Fortnite",
       developer: "Epic Games",
-      image: game2,
+      image: game4,
       price: 0,
       rating: 4.2,
       reviewCount: 450000,
@@ -131,13 +131,13 @@ const GameGrid = () => {
     },
     {
       id: "12", 
-      title: "Genshin Impact",
-      developer: "HoYoverse",
+      title: "Call of Duty: Warzone",
+      developer: "Activision",
       image: game6,
       price: 0,
-      rating: 4.6,
-      reviewCount: 890000,
-      tags: ["RPG", "Anime"],
+      rating: 4.2,
+      reviewCount: 240000,
+      tags: ["Battle Royale", "Shooter"],
     },
     {
       id: "13",
@@ -176,7 +176,7 @@ const GameGrid = () => {
       id: "16",
       title: "Call of Duty: MW3",
       developer: "Activision",
-      image: game2,
+      image: game5,
       price: 69.99,
       rating: 4.0,
       reviewCount: 156000,

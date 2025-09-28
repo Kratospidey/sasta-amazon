@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Play, ShoppingCart } from "lucide-react";
 import heroImage from "@/assets/hero-banner.jpg";
 import eldenRingHero from "@/assets/elden-ring-hero.png";
+import genshinImpactCover from "@/assets/genshin-impact-cover.png";
 
 const HeroBanner = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -20,7 +21,7 @@ const HeroBanner = () => {
     {
       title: "Genshin Impact",
       subtitle: "Explore the vast world of Teyvat in this action RPG",
-      image: heroImage,
+      image: genshinImpactCover,
       price: "Free",
       originalPrice: null,
       badge: "Free to Play",

@@ -22,57 +22,115 @@ import eldenRingCover from "@/assets/elden-ring-cover.png";
 import eldenRingScreenshot1 from "@/assets/elden-ring-screenshot-1.png";
 import eldenRingScreenshot2 from "@/assets/elden-ring-screenshot-2.png";
 import eldenRingScreenshot3 from "@/assets/elden-ring-screenshot-3.png";
+import genshinImpactCover from "@/assets/genshin-impact-cover.png";
+import genshinImpactScreenshot1 from "@/assets/genshin-impact-screenshot-1.png";
+import genshinImpactScreenshot2 from "@/assets/genshin-impact-screenshot-2.png";
+import genshinImpactScreenshot3 from "@/assets/genshin-impact-screenshot-3.png";
+import genshinImpactScreenshot4 from "@/assets/genshin-impact-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
   const [currentScreenshot, setCurrentScreenshot] = useState(0);
   const [isWishlisted, setIsWishlisted] = useState(false);
 
-  // Mock game data - in real app, this would be fetched based on ID
-  const game = {
-    id: id || "1",
-    title: "Elden Ring",
-    developer: "FromSoftware",
-    publisher: "Bandai Namco",
-    price: "$39.99",
-    originalPrice: "$59.99",
-    rating: 4.8,
-    reviews: 125487,
-    releaseDate: "February 25, 2022",
-    platforms: ["PC", "PlayStation", "Xbox"],
-    genres: ["Action", "RPG", "Open World"],
-    description: "THE NEW FANTASY ACTION RPG. Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between. In the Lands Between ruled by Queen Marika the Eternal, the Elden Ring, the source of the Erdtree, has been shattered.",
-    features: [
-      "Massive open-world exploration",
-      "Deep character customization",
-      "Challenging boss battles",
-      "Multiplayer cooperative play",
-      "Rich storytelling and lore"
-    ],
-    screenshots: [
-      eldenRingScreenshot1,
-      eldenRingScreenshot2, 
-      eldenRingScreenshot3,
-      eldenRingCover
-    ],
-    systemRequirements: {
-      minimum: {
-        os: "Windows 10",
-        processor: "Intel Core i5-8400 / AMD Ryzen 3 3300X",
-        memory: "12 GB RAM",
-        graphics: "NVIDIA GeForce GTX 1060 3GB / AMD Radeon RX 580 4GB",
-        storage: "60 GB available space"
-      },
-      recommended: {
-        os: "Windows 10/11",
-        processor: "Intel Core i7-8700K / AMD Ryzen 5 3600X",
-        memory: "16 GB RAM", 
-        graphics: "NVIDIA GeForce GTX 1070 / AMD Radeon RX Vega 56",
-        storage: "60 GB available space"
-      }
+  // Game data based on ID
+  const getGameData = (gameId: string) => {
+    if (gameId === "2") {
+      return {
+        id: gameId,
+        title: "Genshin Impact",
+        developer: "HoYoverse",
+        publisher: "HoYoverse",
+        price: "Free",
+        originalPrice: null,
+        rating: 4.6,
+        reviews: 890000,
+        releaseDate: "September 28, 2020",
+        platforms: ["PC", "Mobile", "PlayStation", "Xbox"],
+        genres: ["Action", "RPG", "Open World", "Anime"],
+        description: "Step into Teyvat, a vast world teeming with life and flowing with elemental energy. You and your sibling arrived here from another world. Separated by an unknown god, stripped of your powers, and cast into a deep slumber, you now awake to a world very different from when you first arrived.",
+        features: [
+          "Open-world action RPG driven by elemental combat",
+          "Team up to 4 characters in your party",
+          "Explore every inch of this wondrous world",
+          "Join forces with diverse cast of characters",
+          "Unravel mysteries of Teyvat"
+        ],
+        screenshots: [
+          genshinImpactCover,
+          genshinImpactScreenshot1,
+          genshinImpactScreenshot2,
+          genshinImpactScreenshot3,
+          genshinImpactScreenshot4
+        ],
+        coverImage: genshinImpactCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 7 SP1 64-bit / Windows 8.1 64-bit / Windows 10 64-bit",
+            processor: "Intel Core i5 or equivalent",
+            memory: "8 GB RAM",
+            graphics: "NVIDIA GeForce GT 1030",
+            storage: "30 GB available space"
+          },
+          recommended: {
+            os: "Windows 10 64-bit",
+            processor: "Intel Core i7 or equivalent",
+            memory: "16 GB RAM",
+            graphics: "NVIDIA GeForce GTX 1060 6GB",
+            storage: "30 GB available space"
+          }
+        }
+      };
     }
+    
+    // Default to Elden Ring (game ID 1 or any other)
+    return {
+      id: gameId,
+      title: "Elden Ring",
+      developer: "FromSoftware",
+      publisher: "Bandai Namco",
+      price: "$39.99",
+      originalPrice: "$59.99",
+      rating: 4.9,
+      reviews: 125487,
+      releaseDate: "February 25, 2022",
+      platforms: ["PC", "PlayStation", "Xbox"],
+      genres: ["Action", "RPG", "Open World"],
+      description: "THE NEW FANTASY ACTION RPG. Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between. In the Lands Between ruled by Queen Marika the Eternal, the Elden Ring, the source of the Erdtree, has been shattered.",
+      features: [
+        "Massive open-world exploration",
+        "Deep character customization",
+        "Challenging boss battles",
+        "Multiplayer cooperative play",
+        "Rich storytelling and lore"
+      ],
+      screenshots: [
+        eldenRingScreenshot1,
+        eldenRingScreenshot2,
+        eldenRingScreenshot3,
+        eldenRingCover
+      ],
+      coverImage: eldenRingCover,
+      systemRequirements: {
+        minimum: {
+          os: "Windows 10",
+          processor: "Intel Core i5-8400 / AMD Ryzen 3 3300X",
+          memory: "12 GB RAM",
+          graphics: "NVIDIA GeForce GTX 1060 3GB / AMD Radeon RX 580 4GB",
+          storage: "60 GB available space"
+        },
+        recommended: {
+          os: "Windows 10/11",
+          processor: "Intel Core i7-8700K / AMD Ryzen 5 3600X",
+          memory: "16 GB RAM",
+          graphics: "NVIDIA GeForce GTX 1070 / AMD Radeon RX Vega 56",
+          storage: "60 GB available space"
+        }
+      }
+    };
   };
 
+  const game = getGameData(id || "1");
   const reviews = [
     {
       id: 1,
@@ -110,7 +168,7 @@ const GameDetails = () => {
         <div className="container mx-auto px-4 h-full flex items-center relative z-10">
           <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
             <img 
-              src={eldenRingCover} 
+              src={game.coverImage} 
               alt={game.title}
               className="w-48 h-64 object-cover rounded-xl shadow-lg"
             />

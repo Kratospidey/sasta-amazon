@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 import eldenRingCover from "@/assets/elden-ring-cover.png";
+import genshinImpactCover from "@/assets/genshin-impact-cover.png";
 
 const Library = () => {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
@@ -39,7 +40,7 @@ const Library = () => {
       id: "2", 
       title: "Genshin Impact",
       developer: "miHoYo",
-      coverImage: "/game-2.jpg",
+      coverImage: genshinImpactCover,
       playtime: "89 hours",
       lastPlayed: "1 day ago", 
       progress: 45,
