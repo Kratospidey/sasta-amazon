@@ -45,6 +45,11 @@ import fortniteScreenshot1 from "@/assets/fortnite-screenshot-1.png";
 import fortniteScreenshot2 from "@/assets/fortnite-screenshot-2.png";
 import fortniteScreenshot3 from "@/assets/fortnite-screenshot-3.png";
 import fortniteScreenshot4 from "@/assets/fortnite-screenshot-4.png";
+import cyberpunkCover from "@/assets/cyberpunk-cover.png";
+import cyberpunkScreenshot1 from "@/assets/cyberpunk-screenshot-1.png";
+import cyberpunkScreenshot2 from "@/assets/cyberpunk-screenshot-2.png";
+import cyberpunkScreenshot3 from "@/assets/cyberpunk-screenshot-3.png";
+import cyberpunkScreenshot4 from "@/assets/cyberpunk-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -287,6 +292,54 @@ const GameDetails = () => {
             memory: "8 GB RAM",
             graphics: "Nvidia GTX 960, AMD R9 280, or equivalent DX11 GPU",
             storage: "15 GB available space"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "10") {
+      return {
+        id: gameId,
+        title: "Cyberpunk 2077",
+        developer: "CD Projekt RED",
+        publisher: "CD Projekt RED",
+        price: "$29.99",
+        originalPrice: "$59.99",
+        rating: 4.1,
+        reviews: 167000,
+        releaseDate: "December 10, 2020",
+        platforms: ["PC", "PlayStation", "Xbox"],
+        genres: ["RPG", "Open World", "Cyberpunk"],
+        description: "Cyberpunk 2077 is an open-world, action-adventure RPG set in the dark future of Night City — a dangerous megalopolis obsessed with power, glamor, and ceaseless body modification. You play as V, a mercenary outlaw going after a one-of-a-kind implant that is the key to immortality.",
+        features: [
+          "Open-world Night City with six distinct districts",
+          "Deep character customization and progression",
+          "Multiple story paths and endings",
+          "Advanced cybernetic enhancements",
+          "Immersive first-person experience"
+        ],
+        screenshots: [
+          cyberpunkCover,
+          cyberpunkScreenshot1,
+          cyberpunkScreenshot2,
+          cyberpunkScreenshot3,
+          cyberpunkScreenshot4
+        ],
+        coverImage: cyberpunkCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 10 64-bit",
+            processor: "Intel Core i5-3570K / AMD FX-8310",
+            memory: "8 GB RAM",
+            graphics: "NVIDIA GeForce GTX 780 / AMD Radeon RX 470",
+            storage: "70 GB available space"
+          },
+          recommended: {
+            os: "Windows 10 64-bit",
+            processor: "Intel Core i7-4790 / AMD Ryzen 3 3200G",
+            memory: "12 GB RAM",
+            graphics: "NVIDIA GeForce GTX 1060 6GB / AMD Radeon RX 590",
+            storage: "70 GB available space (SSD recommended)"
           }
         }
       };

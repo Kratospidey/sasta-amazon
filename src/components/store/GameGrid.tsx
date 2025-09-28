@@ -8,6 +8,7 @@ import game6 from "@/assets/game-6.jpg";
 import amongUsCover from "@/assets/among-us-cover.png";
 import valorantCover from "@/assets/valorant-cover.png";
 import fortniteCover from "@/assets/fortnite-cover.png";
+import cyberpunkCover from "@/assets/cyberpunk-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -115,7 +116,7 @@ const GameGrid = () => {
       id: "10",
       title: "Cyberpunk 2077",
       developer: "CD Projekt RED",
-      image: game5,
+      image: cyberpunkCover,
       price: 29.99,
       originalPrice: 59.99,
       rating: 4.1,
