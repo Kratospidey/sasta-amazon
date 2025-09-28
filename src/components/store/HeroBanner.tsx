@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, Play, ShoppingCart } from "lucide-react";
 import heroImage from "@/assets/hero-banner.jpg";
 import eldenRingHero from "@/assets/elden-ring-hero.png";
 import genshinImpactCover from "@/assets/genshin-impact-cover.png";
+import cosmicWarfareCover from "@/assets/cosmic-warfare-cover.png";
 
 const HeroBanner = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -27,12 +28,12 @@ const HeroBanner = () => {
       badge: "Free to Play",
     },
     {
-      title: "Valorant",
-      subtitle: "Tactical 5v5 character-based shooter",
-      image: heroImage,
-      price: "Free",
-      originalPrice: null,
-      badge: "Free to Play",
+      title: "Cosmic Warfare",
+      subtitle: "Command fleets in epic space battles across the galaxy",
+      image: cosmicWarfareCover,
+      price: "$49.99",
+      originalPrice: "$59.99",
+      badge: "New Release",
     },
     {
       title: "Fortnite",

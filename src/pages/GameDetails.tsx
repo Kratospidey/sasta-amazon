@@ -27,6 +27,9 @@ import genshinImpactScreenshot1 from "@/assets/genshin-impact-screenshot-1.png";
 import genshinImpactScreenshot2 from "@/assets/genshin-impact-screenshot-2.png";
 import genshinImpactScreenshot3 from "@/assets/genshin-impact-screenshot-3.png";
 import genshinImpactScreenshot4 from "@/assets/genshin-impact-screenshot-4.png";
+import cosmicWarfareCover from "@/assets/cosmic-warfare-cover.png";
+import cosmicWarfareScreenshot1 from "@/assets/cosmic-warfare-screenshot-1.png";
+import cosmicWarfareScreenshot2 from "@/assets/cosmic-warfare-screenshot-2.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -78,6 +81,53 @@ const GameDetails = () => {
             memory: "16 GB RAM",
             graphics: "NVIDIA GeForce GTX 1060 6GB",
             storage: "30 GB available space"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "3") {
+      return {
+        id: gameId,
+        title: "Cosmic Warfare",
+        developer: "Atavistia Studios",
+        publisher: "Atavistia Studios",
+        price: "$49.99",
+        originalPrice: "$59.99",
+        rating: 4.6,
+        reviews: 23450,
+        releaseDate: "November 15, 2024",
+        platforms: ["PC", "PlayStation", "Xbox"],
+        genres: ["Sci-Fi", "Action", "Space Combat"],
+        description: "Command massive fleets in epic space battles across the galaxy. Engage in strategic warfare among the stars, utilizing advanced technology and tactics to dominate your enemies. Experience the ultimate cosmic conflict where every decision shapes the fate of civilizations.",
+        features: [
+          "Epic space fleet battles",
+          "Advanced tactical combat system",
+          "Massive galaxy to explore",
+          "Customizable ships and weapons",
+          "Multiplayer campaigns"
+        ],
+        screenshots: [
+          cosmicWarfareCover,
+          cosmicWarfareScreenshot1,
+          cosmicWarfareScreenshot2,
+          cosmicWarfareCover
+        ],
+        coverImage: cosmicWarfareCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 10 64-bit",
+            processor: "Intel Core i5-8400 / AMD Ryzen 5 2600",
+            memory: "8 GB RAM",
+            graphics: "NVIDIA GeForce GTX 1060 / AMD Radeon RX 580",
+            storage: "50 GB available space"
+          },
+          recommended: {
+            os: "Windows 11 64-bit",
+            processor: "Intel Core i7-10700K / AMD Ryzen 7 3700X",
+            memory: "16 GB RAM",
+            graphics: "NVIDIA GeForce RTX 3070 / AMD Radeon RX 6700 XT",
+            storage: "50 GB available space (SSD recommended)"
           }
         }
       };

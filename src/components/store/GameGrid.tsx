@@ -1,7 +1,7 @@
 import GameCard from "./GameCard";
 import eldenRingCover from "@/assets/elden-ring-cover.png";
 import genshinImpactCover from "@/assets/genshin-impact-cover.png";
-import game3 from "@/assets/game-3.jpg";
+import cosmicWarfareCover from "@/assets/cosmic-warfare-cover.png";
 import game4 from "@/assets/game-4.jpg";
 import game5 from "@/assets/game-5.jpg";
 import game6 from "@/assets/game-6.jpg";
@@ -34,15 +34,16 @@ const GameGrid = () => {
     },
     {
       id: "3",
-      title: "Neon Speedway",
-      developer: "Racing Pro",
-      image: game3,
-      price: 29.99,
-      originalPrice: 39.99,
-      rating: 4.4,
-      reviewCount: 12560,
-      tags: ["Racing", "Action"],
+      title: "Cosmic Warfare",
+      developer: "Atavistia Studios",
+      image: cosmicWarfareCover,
+      price: 49.99,
+      originalPrice: 59.99,
+      rating: 4.6,
+      reviewCount: 23450,
+      tags: ["Sci-Fi", "Action"],
       onSale: true,
+      featured: true,
     },
     {
       id: "4",
@@ -90,7 +91,7 @@ const GameGrid = () => {
       id: "8",
       title: "Valorant",
       developer: "Riot Games", 
-      image: game3,
+      image: game4,
       price: 0,
       rating: 4.4,
       reviewCount: 280000,
@@ -111,7 +112,7 @@ const GameGrid = () => {
       id: "10",
       title: "Cyberpunk 2077",
       developer: "CD Projekt RED",
-      image: game3,
+      image: game5,
       price: 29.99,
       originalPrice: 59.99,
       rating: 4.1,
@@ -156,7 +157,7 @@ const GameGrid = () => {
       id: "14",
       title: "Rocket League",
       developer: "Psyonix",
-      image: game3,
+      image: game6,
       price: 0,
       rating: 4.5,
       reviewCount: 178000,
