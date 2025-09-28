@@ -128,25 +128,14 @@
     box-shadow: var(--shadow-card-hover);
   }
   
-  /* Modern Glass Morphism Game Card */
-  .modern-game-card {
-    @apply w-full max-w-sm mx-auto;
+  /* Clean Game Card */
+  .clean-game-card {
+    @apply bg-card border border-border/50 rounded-xl overflow-hidden transition-all duration-300 shadow-lg;
   }
   
-  .modern-game-card.card-hovered {
-    @apply scale-[1.02] -translate-y-2;
-    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.3));
-  }
-  
-  .modern-game-card:hover::before {
-    content: '';
-    @apply absolute inset-0 rounded-2xl pointer-events-none;
-    background: linear-gradient(135deg, 
-      hsl(var(--primary) / 0.1) 0%, 
-      transparent 50%, 
-      hsl(var(--accent) / 0.1) 100%
-    );
-    z-index: 1;
+  .clean-game-card.card-hover {
+    @apply scale-[1.02] shadow-xl border-primary/30;
+    box-shadow: 0 10px 40px -10px hsl(var(--primary) / 0.3);
   }
   
   .premium-glow {
@@ -190,48 +179,12 @@
     50% { box-shadow: 0 0 30px hsl(var(--primary) / 0.6); }
   }
   
-  @keyframes shimmer {
-    0% { transform: translateX(-100%); }
-    100% { transform: translateX(100%); }
-  }
-  
-  @keyframes border-glow {
-    0%, 100% { 
-      border-color: hsl(var(--primary) / 0.3);
-      box-shadow: 0 0 20px hsl(var(--primary) / 0.2);
-    }
-    50% { 
-      border-color: hsl(var(--primary) / 0.6);
-      box-shadow: 0 0 30px hsl(var(--primary) / 0.4);
-    }
-  }
-  
   .float-animation {
     animation: float 3s ease-in-out infinite;
   }
   
   .glow-pulse {
     animation: glow-pulse 2s ease-in-out infinite;
-  }
-  
-  .shimmer-effect {
-    position: relative;
-    overflow: hidden;
-  }
-  
-  .shimmer-effect::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-    animation: shimmer 2s infinite;
-  }
-  
-  .border-glow-animation {
-    animation: border-glow 3s ease-in-out infinite;
   }
   
   .filter-sidebar {
