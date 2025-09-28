@@ -55,6 +55,11 @@ import minecraftScreenshot1 from "@/assets/minecraft-screenshot-1.png";
 import minecraftScreenshot2 from "@/assets/minecraft-screenshot-2.png";
 import minecraftScreenshot3 from "@/assets/minecraft-screenshot-3.png";
 import minecraftScreenshot4 from "@/assets/minecraft-screenshot-4.png";
+import apexLegendsCover from "@/assets/apex-legends-cover.png";
+import apexLegendsScreenshot1 from "@/assets/apex-legends-screenshot-1.png";
+import apexLegendsScreenshot2 from "@/assets/apex-legends-screenshot-2.png";
+import apexLegendsScreenshot3 from "@/assets/apex-legends-screenshot-3.png";
+import apexLegendsScreenshot4 from "@/assets/apex-legends-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -393,6 +398,54 @@ const GameDetails = () => {
             memory: "8 GB RAM",
             graphics: "GeForce 700 Series / AMD Radeon Rx 200 Series",
             storage: "4 GB available space (SSD recommended)"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "11") {
+      return {
+        id: gameId,
+        title: "Apex Legends",
+        developer: "Respawn Entertainment",
+        publisher: "Electronic Arts",
+        price: "Free",
+        originalPrice: null,
+        rating: 4.3,
+        reviews: 325000,
+        releaseDate: "February 4, 2019",
+        platforms: ["PC", "PlayStation", "Xbox", "Nintendo Switch", "Mobile"],
+        genres: ["Battle Royale", "Hero Shooter", "First-Person Shooter"],
+        description: "Conquer with character in Apex Legends, a free-to-play Battle Royale shooter where legendary characters with powerful abilities team up to battle for fame & fortune on the fringes of the Frontier. Master an ever-growing roster of diverse Legends, deep tactical squad play and bold new innovations.",
+        features: [
+          "Choose from a diverse cast of unique Legends",
+          "Master their powerful abilities on the battlefield",
+          "Squad-based tactical gameplay",
+          "Evolving world with new content every season",
+          "Cross-platform play and progression"
+        ],
+        screenshots: [
+          apexLegendsCover,
+          apexLegendsScreenshot1,
+          apexLegendsScreenshot2,
+          apexLegendsScreenshot3,
+          apexLegendsScreenshot4
+        ],
+        coverImage: apexLegendsCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 7 64-bit",
+            processor: "Intel Core i3-6300 3.8GHz / AMD FX-4350 4.2GHz",
+            memory: "6 GB RAM",
+            graphics: "NVIDIA GeForce GT 640 / AMD Radeon HD 7730",
+            storage: "22 GB available space"
+          },
+          recommended: {
+            os: "Windows 10 64-bit",
+            processor: "Intel i5 3570K or equivalent",
+            memory: "8 GB RAM",
+            graphics: "NVIDIA GeForce GTX 970 / AMD Radeon R9 290",
+            storage: "22 GB available space"
           }
         }
       };

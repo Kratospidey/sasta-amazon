@@ -10,6 +10,7 @@ import valorantCover from "@/assets/valorant-cover.png";
 import fortniteCover from "@/assets/fortnite-cover.png";
 import cyberpunkCover from "@/assets/cyberpunk-cover.png";
 import minecraftCover from "@/assets/minecraft-cover.png";
+import apexLegendsCover from "@/assets/apex-legends-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -129,7 +130,7 @@ const GameGrid = () => {
       id: "11",
       title: "Apex Legends",
       developer: "Respawn Entertainment",
-      image: game5,
+      image: apexLegendsCover,
       price: 0,
       rating: 4.3,
       reviewCount: 325000,
