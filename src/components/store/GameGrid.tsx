@@ -16,6 +16,7 @@ import witcherCover from "@/assets/witcher-cover.png";
 import stardewValleyCover from "@/assets/stardew-valley-cover.png";
 import fallGuysCover from "@/assets/fall-guys-cover.png";
 import rocketLeagueCover from "@/assets/rocket-league-cover.png";
+import leagueOfLegendsCover from "@/assets/league-of-legends-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -186,13 +187,14 @@ const GameGrid = () => {
     },
     {
       id: "16",
-      title: "Call of Duty: MW3",
-      developer: "Activision",
-      image: codMw3Cover,
-      price: 69.99,
-      rating: 4.0,
-      reviewCount: 156000,
-      tags: ["Shooter", "Military"],
+      title: "League of Legends",
+      developer: "Riot Games",
+      image: leagueOfLegendsCover,
+      price: 0,
+      rating: 4.4,
+      reviewCount: 892000,
+      tags: ["MOBA", "Strategy"],
+      featured: true,
     },
     {
       id: "17",

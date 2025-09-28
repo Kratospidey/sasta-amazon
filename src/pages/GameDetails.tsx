@@ -84,6 +84,11 @@ import rocketLeagueScreenshot1 from "@/assets/rocket-league-screenshot-1.png";
 import rocketLeagueScreenshot2 from "@/assets/rocket-league-screenshot-2.png";
 import rocketLeagueScreenshot3 from "@/assets/rocket-league-screenshot-3.png";
 import rocketLeagueScreenshot4 from "@/assets/rocket-league-screenshot-4.png";
+import leagueOfLegendsCover from "@/assets/league-of-legends-cover.png";
+import leagueOfLegendsScreenshot1 from "@/assets/league-of-legends-screenshot-1.png";
+import leagueOfLegendsScreenshot2 from "@/assets/league-of-legends-screenshot-2.png";
+import leagueOfLegendsScreenshot3 from "@/assets/league-of-legends-screenshot-3.png";
+import leagueOfLegendsScreenshot4 from "@/assets/league-of-legends-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -709,6 +714,54 @@ const GameDetails = () => {
             memory: "8 GB RAM",
             graphics: "NVIDIA GeForce GTX 1060, ATI Radeon RX 470",
             storage: "20 GB available space"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "16") {
+      return {
+        id: gameId,
+        title: "League of Legends",
+        developer: "Riot Games",
+        publisher: "Riot Games",
+        price: "Free",
+        originalPrice: null,
+        rating: 4.4,
+        reviews: 892000,
+        releaseDate: "October 27, 2009",
+        platforms: ["PC", "Mac"],
+        genres: ["MOBA", "Strategy", "Multiplayer"],
+        description: "League of Legends is a multiplayer online battle arena (MOBA) game where teams of five champions battle to destroy the enemy Nexus. Choose from over 160 unique champions, each with distinct abilities and playstyles. Master the Rift, climb the ranked ladder, and prove your skill in the world's most popular competitive game.",
+        features: [
+          "160+ unique champions with distinct abilities",
+          "Competitive ranked system with seasonal rewards",
+          "Regular updates with new champions and balance changes", 
+          "Professional esports scene with global tournaments",
+          "Multiple game modes including ARAM and special events"
+        ],
+        screenshots: [
+          leagueOfLegendsCover,
+          leagueOfLegendsScreenshot1,
+          leagueOfLegendsScreenshot2,
+          leagueOfLegendsScreenshot3,
+          leagueOfLegendsScreenshot4
+        ],
+        coverImage: leagueOfLegendsCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 7, 8, 10, 11 (64-bit)",
+            processor: "2 GHz processor",
+            memory: "1 GB RAM",
+            graphics: "DirectX 9.0c capable",
+            storage: "16 GB available space"
+          },
+          recommended: {
+            os: "Windows 10/11 (64-bit)",
+            processor: "3 GHz processor",
+            memory: "4 GB RAM",
+            graphics: "DirectX 11 capable",
+            storage: "16 GB available space"
           }
         }
       };
