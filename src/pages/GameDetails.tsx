@@ -50,6 +50,11 @@ import cyberpunkScreenshot1 from "@/assets/cyberpunk-screenshot-1.png";
 import cyberpunkScreenshot2 from "@/assets/cyberpunk-screenshot-2.png";
 import cyberpunkScreenshot3 from "@/assets/cyberpunk-screenshot-3.png";
 import cyberpunkScreenshot4 from "@/assets/cyberpunk-screenshot-4.png";
+import minecraftCover from "@/assets/minecraft-cover.png";
+import minecraftScreenshot1 from "@/assets/minecraft-screenshot-1.png";
+import minecraftScreenshot2 from "@/assets/minecraft-screenshot-2.png";
+import minecraftScreenshot3 from "@/assets/minecraft-screenshot-3.png";
+import minecraftScreenshot4 from "@/assets/minecraft-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -340,6 +345,54 @@ const GameDetails = () => {
             memory: "12 GB RAM",
             graphics: "NVIDIA GeForce GTX 1060 6GB / AMD Radeon RX 590",
             storage: "70 GB available space (SSD recommended)"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "9") {
+      return {
+        id: gameId,
+        title: "Minecraft",
+        developer: "Mojang Studios",
+        publisher: "Microsoft Studios",
+        price: "$26.95",
+        originalPrice: null,
+        rating: 4.9,
+        reviews: 500000,
+        releaseDate: "November 18, 2011",
+        platforms: ["PC", "PlayStation", "Xbox", "Nintendo Switch", "Mobile"],
+        genres: ["Sandbox", "Survival", "Creative"],
+        description: "Minecraft is a game about placing blocks and going on adventures. Explore randomly generated worlds and build amazing things from the simplest of homes to the grandest of castles. Play in creative mode with unlimited resources or mine deep into the world in survival mode.",
+        features: [
+          "Infinite worlds with endless possibilities",
+          "Creative and survival game modes",
+          "Multiplayer support for shared adventures",
+          "Regular updates with new content",
+          "Cross-platform play across devices"
+        ],
+        screenshots: [
+          minecraftCover,
+          minecraftScreenshot1,
+          minecraftScreenshot2,
+          minecraftScreenshot3,
+          minecraftScreenshot4
+        ],
+        coverImage: minecraftCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 7 and up",
+            processor: "Intel Core i3-3210 3.2 GHz / AMD A8-7600 APU 3.1 GHz",
+            memory: "4 GB RAM",
+            graphics: "Intel HD Graphics 4000 / AMD Radeon R5 series",
+            storage: "1 GB available space"
+          },
+          recommended: {
+            os: "Windows 10",
+            processor: "Intel Core i5-4690 3.5GHz / AMD A10-7800 APU 3.5 GHz",
+            memory: "8 GB RAM",
+            graphics: "GeForce 700 Series / AMD Radeon Rx 200 Series",
+            storage: "4 GB available space (SSD recommended)"
           }
         }
       };

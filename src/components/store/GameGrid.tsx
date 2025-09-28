@@ -9,6 +9,7 @@ import amongUsCover from "@/assets/among-us-cover.png";
 import valorantCover from "@/assets/valorant-cover.png";
 import fortniteCover from "@/assets/fortnite-cover.png";
 import cyberpunkCover from "@/assets/cyberpunk-cover.png";
+import minecraftCover from "@/assets/minecraft-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -105,7 +106,7 @@ const GameGrid = () => {
       id: "9",
       title: "Minecraft",
       developer: "Mojang Studios",
-      image: game4,
+      image: minecraftCover,
       price: 26.95,
       rating: 4.9,
       reviewCount: 500000,
