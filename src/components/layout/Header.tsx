@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useCart } from "@/contexts/CartContext";
 import { useFilters } from "@/contexts/FilterContext";
 import { 
@@ -77,6 +78,8 @@ const Header = () => {
 
         {/* User Actions */}
         <div className="flex items-center space-x-2">
+          <ThemeToggle />
+          
           <Link to="/notifications">
             <Button variant="ghost" size="sm" className="hidden sm:flex">
               <Bell className="h-4 w-4" />
