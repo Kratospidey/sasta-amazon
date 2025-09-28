@@ -30,6 +30,11 @@ import genshinImpactScreenshot4 from "@/assets/genshin-impact-screenshot-4.png";
 import cosmicWarfareCover from "@/assets/cosmic-warfare-cover.png";
 import cosmicWarfareScreenshot1 from "@/assets/cosmic-warfare-screenshot-1.png";
 import cosmicWarfareScreenshot2 from "@/assets/cosmic-warfare-screenshot-2.png";
+import amongUsCover from "@/assets/among-us-cover.png";
+import amongUsScreenshot1 from "@/assets/among-us-screenshot-1.png";
+import amongUsScreenshot2 from "@/assets/among-us-screenshot-2.png";
+import amongUsScreenshot3 from "@/assets/among-us-screenshot-3.png";
+import amongUsScreenshot4 from "@/assets/among-us-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -128,6 +133,54 @@ const GameDetails = () => {
             memory: "16 GB RAM",
             graphics: "NVIDIA GeForce RTX 3070 / AMD Radeon RX 6700 XT",
             storage: "50 GB available space (SSD recommended)"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "18") {
+      return {
+        id: gameId,
+        title: "Among Us",
+        developer: "InnerSloth",
+        publisher: "InnerSloth",
+        price: "$4.99",
+        originalPrice: null,
+        rating: 4.4,
+        reviews: 234000,
+        releaseDate: "June 15, 2018",
+        platforms: ["PC", "Mobile", "PlayStation", "Xbox", "Nintendo Switch"],
+        genres: ["Social Deduction", "Party", "Multiplayer"],
+        description: "Play with 4-15 player online or via local WiFi as you attempt to prepare your spaceship for departure, but beware as one or more random players among the Crew are Impostors bent on killing everyone! Originally created as a party game, we recommend playing with friends at a LAN party or online using voice chat.",
+        features: [
+          "Cross-platform multiplayer for up to 15 players",
+          "Social deduction gameplay with friends",
+          "Multiple maps and customization options",
+          "Voice chat integration",
+          "Regular content updates"
+        ],
+        screenshots: [
+          amongUsCover,
+          amongUsScreenshot1,
+          amongUsScreenshot2,
+          amongUsScreenshot3,
+          amongUsScreenshot4
+        ],
+        coverImage: amongUsCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 7 SP1+",
+            processor: "SSE2 instruction set support",
+            memory: "1 GB RAM",
+            graphics: "Graphics card with DX10 (shader model 4.0) capabilities",
+            storage: "250 MB available space"
+          },
+          recommended: {
+            os: "Windows 10",
+            processor: "Intel Core i3 or equivalent",
+            memory: "2 GB RAM",
+            graphics: "Graphics card with DX11 support",
+            storage: "500 MB available space"
           }
         }
       };

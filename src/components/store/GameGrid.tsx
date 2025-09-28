@@ -5,6 +5,7 @@ import cosmicWarfareCover from "@/assets/cosmic-warfare-cover.png";
 import game4 from "@/assets/game-4.jpg";
 import game5 from "@/assets/game-5.jpg";
 import game6 from "@/assets/game-6.jpg";
+import amongUsCover from "@/assets/among-us-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -197,7 +198,7 @@ const GameGrid = () => {
       id: "18",
       title: "Among Us",
       developer: "InnerSloth",
-      image: game6,
+      image: amongUsCover,
       price: 4.99,
       rating: 4.4,
       reviewCount: 234000,
