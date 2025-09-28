@@ -40,6 +40,11 @@ import valorantScreenshot1 from "@/assets/valorant-screenshot-1.png";
 import valorantScreenshot2 from "@/assets/valorant-screenshot-2.png";
 import valorantScreenshot3 from "@/assets/valorant-screenshot-3.png";
 import valorantScreenshot4 from "@/assets/valorant-screenshot-4.png";
+import fortniteCover from "@/assets/fortnite-cover.png";
+import fortniteScreenshot1 from "@/assets/fortnite-screenshot-1.png";
+import fortniteScreenshot2 from "@/assets/fortnite-screenshot-2.png";
+import fortniteScreenshot3 from "@/assets/fortnite-screenshot-3.png";
+import fortniteScreenshot4 from "@/assets/fortnite-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -234,6 +239,54 @@ const GameDetails = () => {
             memory: "8 GB RAM",
             graphics: "GTX 1050 Ti",
             storage: "8 GB available space"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "7") {
+      return {
+        id: gameId,
+        title: "Fortnite",
+        developer: "Epic Games",
+        publisher: "Epic Games",
+        price: "Free",
+        originalPrice: null,
+        rating: 4.2,
+        reviews: 450000,
+        releaseDate: "July 21, 2017",
+        platforms: ["PC", "PlayStation", "Xbox", "Nintendo Switch", "Mobile"],
+        genres: ["Battle Royale", "Building", "Shooter"],
+        description: "Fortnite is the completely free multiplayer game where you and your friends can jump into Battle Royale or Fortnite Creative. Download now and jump into the action. In Battle Royale, you'll compete with up to 100 other players to be the last one standing in an ever-shrinking map.",
+        features: [
+          "100-player Battle Royale matches",
+          "Unique building mechanics",
+          "Regular content updates and events",
+          "Cross-platform play",
+          "Creative mode for building and custom games"
+        ],
+        screenshots: [
+          fortniteCover,
+          fortniteScreenshot1,
+          fortniteScreenshot2,
+          fortniteScreenshot3,
+          fortniteScreenshot4
+        ],
+        coverImage: fortniteCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 7/8/10 64-bit or Mac OS Mojave 10.14.6",
+            processor: "Core i3-3225 3.3 GHz",
+            memory: "4 GB RAM",
+            graphics: "Intel HD 4000 on PC; Intel Iris Pro 5200",
+            storage: "15 GB available space"
+          },
+          recommended: {
+            os: "Windows 10 64-bit",
+            processor: "Core i5-7300U 3.5 GHz",
+            memory: "8 GB RAM",
+            graphics: "Nvidia GTX 960, AMD R9 280, or equivalent DX11 GPU",
+            storage: "15 GB available space"
           }
         }
       };

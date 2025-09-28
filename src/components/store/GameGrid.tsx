@@ -7,6 +7,7 @@ import game5 from "@/assets/game-5.jpg";
 import game6 from "@/assets/game-6.jpg";
 import amongUsCover from "@/assets/among-us-cover.png";
 import valorantCover from "@/assets/valorant-cover.png";
+import fortniteCover from "@/assets/fortnite-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -83,7 +84,7 @@ const GameGrid = () => {
       id: "7",
       title: "Fortnite",
       developer: "Epic Games",
-      image: game4,
+      image: fortniteCover,
       price: 0,
       rating: 4.2,
       reviewCount: 450000,

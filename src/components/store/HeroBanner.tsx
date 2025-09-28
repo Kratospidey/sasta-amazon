@@ -6,6 +6,7 @@ import heroImage from "@/assets/hero-banner.jpg";
 import eldenRingHero from "@/assets/elden-ring-hero.png";
 import genshinImpactCover from "@/assets/genshin-impact-cover.png";
 import cosmicWarfareCover from "@/assets/cosmic-warfare-cover.png";
+import fortniteCover from "@/assets/fortnite-cover.png";
 
 const HeroBanner = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -38,7 +39,7 @@ const HeroBanner = () => {
     {
       title: "Fortnite",
       subtitle: "Battle Royale with building mechanics",
-      image: heroImage,
+      image: fortniteCover,
       price: "Free",
       originalPrice: null,
       badge: "Most Popular",

@@ -18,6 +18,7 @@ import {
 import Header from "@/components/layout/Header";
 import eldenRingCover from "@/assets/elden-ring-cover.png";
 import genshinImpactCover from "@/assets/genshin-impact-cover.png";
+import fortniteCover from "@/assets/fortnite-cover.png";
 
 const Library = () => {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
@@ -64,7 +65,7 @@ const Library = () => {
       id: "4",
       title: "Fortnite",
       developer: "Epic Games", 
-      coverImage: "/game-4.jpg",
+      coverImage: fortniteCover,
       playtime: "78 hours",
       lastPlayed: "3 days ago",
       progress: 0,
