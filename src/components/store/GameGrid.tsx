@@ -15,6 +15,7 @@ import codMw3Cover from "@/assets/cod-mw3-cover.jpg";
 import witcherCover from "@/assets/witcher-cover.png";
 import stardewValleyCover from "@/assets/stardew-valley-cover.png";
 import fallGuysCover from "@/assets/fall-guys-cover.png";
+import rocketLeagueCover from "@/assets/rocket-league-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -167,7 +168,7 @@ const GameGrid = () => {
       id: "14",
       title: "Rocket League",
       developer: "Psyonix",
-      image: game6,
+      image: rocketLeagueCover,
       price: 0,
       rating: 4.5,
       reviewCount: 178000,

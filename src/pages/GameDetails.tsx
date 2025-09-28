@@ -79,6 +79,11 @@ import fallGuysScreenshot1 from "@/assets/fall-guys-screenshot-1.png";
 import fallGuysScreenshot2 from "@/assets/fall-guys-screenshot-2.png";
 import fallGuysScreenshot3 from "@/assets/fall-guys-screenshot-3.png";
 import fallGuysScreenshot4 from "@/assets/fall-guys-screenshot-4.png";
+import rocketLeagueCover from "@/assets/rocket-league-cover.png";
+import rocketLeagueScreenshot1 from "@/assets/rocket-league-screenshot-1.png";
+import rocketLeagueScreenshot2 from "@/assets/rocket-league-screenshot-2.png";
+import rocketLeagueScreenshot3 from "@/assets/rocket-league-screenshot-3.png";
+import rocketLeagueScreenshot4 from "@/assets/rocket-league-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -656,6 +661,54 @@ const GameDetails = () => {
             memory: "8 GB RAM",
             graphics: "NVIDIA GTX 1060 or AMD equivalent",
             storage: "2 GB available space"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "14") {
+      return {
+        id: gameId,
+        title: "Rocket League",
+        developer: "Psyonix",
+        publisher: "Epic Games",
+        price: "Free",
+        originalPrice: null,
+        rating: 4.5,
+        reviews: 178000,
+        releaseDate: "July 7, 2015",
+        platforms: ["PC", "PlayStation", "Xbox", "Nintendo Switch"],
+        genres: ["Sports", "Racing", "Arcade"],
+        description: "Rocket League is a vehicular soccer video game developed and published by Psyonix. Players control a rocket-powered car and use it to hit a ball that is much larger than the cars towards the other team's goal area to score goals, in a way that resembles a soccer game, with elements reminiscent of a demolition derby.",
+        features: [
+          "Competitive and casual online matches",
+          "Season mode and local multiplayer",
+          "Extensive customization options",
+          "Cross-platform play and progression",
+          "Regular tournaments and events"
+        ],
+        screenshots: [
+          rocketLeagueCover,
+          rocketLeagueScreenshot1,
+          rocketLeagueScreenshot2,
+          rocketLeagueScreenshot3,
+          rocketLeagueScreenshot4
+        ],
+        coverImage: rocketLeagueCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 7 (64 bit) or Newer",
+            processor: "2.5 GHz Dual core",
+            memory: "4 GB RAM",
+            graphics: "NVIDIA GeForce GTX 660, ATI Radeon HD 7950",
+            storage: "20 GB available space"
+          },
+          recommended: {
+            os: "Windows 10 (64 bit)",
+            processor: "3.0+ GHz Quad core",
+            memory: "8 GB RAM",
+            graphics: "NVIDIA GeForce GTX 1060, ATI Radeon RX 470",
+            storage: "20 GB available space"
           }
         }
       };
