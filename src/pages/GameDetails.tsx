@@ -18,6 +18,10 @@ import {
   ChevronRight
 } from "lucide-react";
 import Header from "@/components/layout/Header";
+import eldenRingCover from "@/assets/elden-ring-cover.png";
+import eldenRingScreenshot1 from "@/assets/elden-ring-screenshot-1.png";
+import eldenRingScreenshot2 from "@/assets/elden-ring-screenshot-2.png";
+import eldenRingScreenshot3 from "@/assets/elden-ring-screenshot-3.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -46,10 +50,10 @@ const GameDetails = () => {
       "Rich storytelling and lore"
     ],
     screenshots: [
-      "/game-1.jpg",
-      "/game-2.jpg", 
-      "/game-3.jpg",
-      "/game-4.jpg"
+      eldenRingScreenshot1,
+      eldenRingScreenshot2, 
+      eldenRingScreenshot3,
+      eldenRingCover
     ],
     systemRequirements: {
       minimum: {
@@ -106,7 +110,7 @@ const GameDetails = () => {
         <div className="container mx-auto px-4 h-full flex items-center relative z-10">
           <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
             <img 
-              src="/game-1.jpg" 
+              src={eldenRingCover} 
               alt={game.title}
               className="w-48 h-64 object-cover rounded-xl shadow-lg"
             />

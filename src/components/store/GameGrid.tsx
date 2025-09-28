@@ -1,5 +1,5 @@
 import GameCard from "./GameCard";
-import game1 from "@/assets/game-1.jpg";
+import eldenRingCover from "@/assets/elden-ring-cover.png";
 import game2 from "@/assets/game-2.jpg";
 import game3 from "@/assets/game-3.jpg";
 import game4 from "@/assets/game-4.jpg";
@@ -10,14 +10,14 @@ const GameGrid = () => {
   const games = [
     {
       id: "1",
-      title: "Mystic Realms",
-      developer: "Fantasy Studios", 
-      image: game1,
+      title: "Elden Ring",
+      developer: "FromSoftware", 
+      image: eldenRingCover,
       price: 39.99,
       originalPrice: 59.99,
-      rating: 4.8,
-      reviewCount: 15420,
-      tags: ["RPG", "Fantasy"],
+      rating: 4.9,
+      reviewCount: 125487,
+      tags: ["RPG", "Open World"],
       onSale: true,
       featured: true,
     },
@@ -90,7 +90,7 @@ const GameGrid = () => {
       id: "8",
       title: "Valorant",
       developer: "Riot Games", 
-      image: game1,
+      image: game3,
       price: 0,
       rating: 4.4,
       reviewCount: 280000,
@@ -141,9 +141,9 @@ const GameGrid = () => {
     },
     {
       id: "13",
-      title: "Elden Ring",
-      developer: "FromSoftware",
-      image: game1,
+      title: "The Witcher 3",
+      developer: "CD Projekt RED",
+      image: eldenRingCover,
       price: 49.99,
       originalPrice: 59.99,
       rating: 4.8,

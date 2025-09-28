@@ -16,6 +16,7 @@ import {
   Filter
 } from "lucide-react";
 import Header from "@/components/layout/Header";
+import eldenRingCover from "@/assets/elden-ring-cover.png";
 
 const Library = () => {
   const [selectedGame, setSelectedGame] = useState<string | null>(null);
@@ -26,7 +27,7 @@ const Library = () => {
       id: "1",
       title: "Elden Ring",
       developer: "FromSoftware",
-      coverImage: "/game-1.jpg",
+      coverImage: eldenRingCover,
       playtime: "142 hours",
       lastPlayed: "2 hours ago",
       progress: 75,

@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ChevronLeft, ChevronRight, Play, ShoppingCart } from "lucide-react";
 import heroImage from "@/assets/hero-banner.jpg";
+import eldenRingHero from "@/assets/elden-ring-hero.png";
 
 const HeroBanner = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -11,7 +12,7 @@ const HeroBanner = () => {
     {
       title: "Elden Ring",
       subtitle: "Embark on a journey through the Lands Between",
-      image: heroImage,
+      image: eldenRingHero,
       price: "$39.99",
       originalPrice: "$59.99",
       badge: "Featured",
