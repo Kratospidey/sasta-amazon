@@ -54,14 +54,14 @@ const GameCard = ({
 
   return (
     <Card 
-      className={`game-card group cursor-pointer transition-all duration-300 ${isHovered ? 'game-card-hover' : ''}`}
+      className={`game-card group cursor-pointer transition-all duration-300 ${isHovered ? 'game-card-hover' : ''} max-w-sm`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => navigate(`/game/${id}`)}
     >
       <CardContent className="p-0">
         {/* Game Image */}
-        <div className="relative aspect-[3/4] overflow-hidden">
+        <div className="relative aspect-[16/9] overflow-hidden rounded-t-xl">
           <img 
             src={image} 
             alt={title}
@@ -79,12 +79,16 @@ const GameCard = ({
           </div>
 
           {/* Badges */}
-          <div className="absolute top-2 left-2 flex flex-col gap-1">
+          <div className="absolute top-3 left-3 flex flex-wrap gap-2">
             {featured && (
-              <Badge className="bg-accent text-accent-foreground">Featured</Badge>
+              <Badge className="bg-primary text-primary-foreground font-medium px-2 py-1">
+                Featured
+              </Badge>
             )}
             {onSale && (
-              <Badge variant="destructive">-{discountPercentage}%</Badge>
+              <Badge className="bg-destructive text-destructive-foreground font-medium px-2 py-1">
+                Sale
+              </Badge>
             )}
           </div>
 
@@ -92,9 +96,7 @@ const GameCard = ({
           <Button
             variant="ghost"
             size="sm"
-            className={`absolute top-2 right-2 h-8 w-8 p-0 transition-opacity duration-300 ${
-              isHovered ? 'opacity-100' : 'opacity-70'
-            }`}
+            className={`absolute top-3 right-3 h-9 w-9 p-0 bg-black/50 hover:bg-black/70 border border-white/20 transition-all duration-300`}
             onClick={(e) => {
               e.stopPropagation();
               setIsWishlisted(!isWishlisted);
@@ -107,30 +109,34 @@ const GameCard = ({
         </div>
 
         {/* Game Info */}
-        <div className="p-4">
-          <div className="mb-2">
-            <h3 className="font-semibold text-sm line-clamp-1 mb-1">{title}</h3>
-            <p className="text-xs text-muted-foreground">{developer}</p>
+        <div className="p-4 bg-card">
+          <div className="mb-3">
+            <h3 className="font-bold text-lg text-foreground line-clamp-1 mb-1">{title}</h3>
+            <p className="text-sm text-muted-foreground">{developer}</p>
           </div>
 
           {/* Tags */}
-          <div className="flex flex-wrap gap-1 mb-3">
-            {tags.slice(0, 2).map(tag => (
-              <Badge 
+          <div className="flex flex-wrap gap-2 mb-4">
+            {tags.slice(0, 3).map(tag => (
+              <span 
                 key={tag} 
-                variant="outline" 
-                className="text-xs py-0 px-2 h-5"
+                className="text-xs font-medium text-muted-foreground bg-muted px-2 py-1 rounded"
               >
                 {tag}
-              </Badge>
+              </span>
             ))}
           </div>
 
           {/* Rating */}
-          <div className="flex items-center gap-1 mb-3">
-            <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-            <span className="text-xs font-medium">{rating}</span>
-            <span className="text-xs text-muted-foreground">
+          <div className="flex items-center gap-1 mb-4">
+            {[...Array(5)].map((_, i) => (
+              <Star 
+                key={i}
+                className={`h-4 w-4 ${i < Math.floor(rating) ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`} 
+              />
+            ))}
+            <span className="text-sm font-bold text-foreground ml-2">{rating}</span>
+            <span className="text-sm text-muted-foreground">
               ({reviewCount.toLocaleString()})
             </span>
           </div>
@@ -143,24 +149,22 @@ const GameCard = ({
                   <span className="text-sm line-through text-muted-foreground">
                     ${originalPrice}
                   </span>
-                  <span className="text-sm font-semibold text-primary">
+                  <span className="text-xl font-bold text-foreground">
                     ${price}
                   </span>
                 </>
               ) : (
-                <span className="text-sm font-semibold">
+                <span className="text-xl font-bold text-foreground">
                   {price === 0 ? 'Free' : `$${price}`}
                 </span>
               )}
             </div>
             
             <Button 
-              size="sm" 
-              className="h-7 px-2"
+              className="px-4 py-2 font-medium"
               onClick={handleAddToCart}
             >
-              <ShoppingCart className="h-3 w-3 mr-1" />
-              Add
+              Add to Cart
             </Button>
           </div>
         </div>
