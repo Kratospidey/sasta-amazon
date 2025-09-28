@@ -9,28 +9,44 @@ const HeroBanner = () => {
 
   const slides = [
     {
-      title: "Epic Fantasy Adventures Await",
-      subtitle: "Embark on legendary quests in immersive worlds",
+      title: "Elden Ring",
+      subtitle: "Embark on a journey through the Lands Between",
       image: heroImage,
       price: "$39.99",
       originalPrice: "$59.99",
       badge: "Featured",
     },
     {
-      title: "Next-Gen Gaming Experience",
-      subtitle: "Push the boundaries of what's possible",
-      image: heroImage,
-      price: "$49.99", 
-      originalPrice: "$69.99",
-      badge: "New Release",
-    },
-    {
-      title: "Multiplayer Mayhem",
-      subtitle: "Battle with friends in intense competitions",
+      title: "Genshin Impact",
+      subtitle: "Explore the vast world of Teyvat in this action RPG",
       image: heroImage,
       price: "Free",
       originalPrice: null,
       badge: "Free to Play",
+    },
+    {
+      title: "Valorant",
+      subtitle: "Tactical 5v5 character-based shooter",
+      image: heroImage,
+      price: "Free",
+      originalPrice: null,
+      badge: "Free to Play",
+    },
+    {
+      title: "Fortnite",
+      subtitle: "Battle Royale with building mechanics",
+      image: heroImage,
+      price: "Free",
+      originalPrice: null,
+      badge: "Most Popular",
+    },
+    {
+      title: "Minecraft",
+      subtitle: "Build, explore, and survive in infinite worlds",
+      image: heroImage,
+      price: "$26.95",
+      originalPrice: null,
+      badge: "Bestseller",
     }
   ];
 
@@ -116,10 +132,10 @@ const HeroBanner = () => {
             <div className="flex flex-col sm:flex-row gap-4">
               <Button 
                 size="lg" 
-                className="hero-gradient text-white border-none hover:shadow-lg hover:scale-[1.02] transition-all"
+                className="bg-primary text-primary-foreground hover:bg-primary-hover hover:shadow-lg hover:scale-[1.02] transition-all"
               >
                 <ShoppingCart className="mr-2 h-5 w-5" />
-                Add to Cart
+                {currentSlideData.price === "Free" ? "Play Now" : "Buy Now"}
               </Button>
               <Button 
                 variant="outline" 
@@ -127,7 +143,7 @@ const HeroBanner = () => {
                 className="bg-white/10 border-white/30 text-white hover:bg-white/20"
               >
                 <Play className="mr-2 h-4 w-4" />
-                Watch Trailer
+                Learn More
               </Button>
             </div>
           </div>

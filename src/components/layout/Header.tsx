@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -13,15 +14,10 @@ import {
 
 const Header = () => {
   const [cartCount] = useState(3);
+  const navigate = useNavigate();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      {/* Top Banner */}
-      <div className="bg-gaming-surface border-b border-border overflow-hidden h-8">
-        <div className="scrolling-banner py-1 text-sm text-muted-foreground">
-          🎮 Autumn Sale – Up to 80% Off • Free Games Weekly • New Arrivals Every Friday • Premium Members Get Early Access
-        </div>
-      </div>
 
       {/* Main Header */}
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
@@ -30,22 +26,26 @@ const Header = () => {
           <Button variant="ghost" size="sm" className="md:hidden">
             <Menu className="h-5 w-5" />
           </Button>
-          <div className="flex items-center space-x-2">
+          <Link to="/" className="flex items-center space-x-2">
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <Gamepad2 className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="text-xl font-bold hidden sm:inline">GameHub</span>
-          </div>
+          </Link>
         </div>
 
         {/* Navigation */}
         <nav className="hidden md:flex items-center space-x-6">
-          <Button variant="ghost" className="text-foreground hover:text-primary">
-            Store
-          </Button>
-          <Button variant="ghost" className="text-foreground hover:text-primary">
-            Library
-          </Button>
+          <Link to="/">
+            <Button variant="ghost" className="text-foreground hover:text-primary">
+              Store
+            </Button>
+          </Link>
+          <Link to="/library">
+            <Button variant="ghost" className="text-foreground hover:text-primary">
+              Library
+            </Button>
+          </Link>
           <Button variant="ghost" className="text-foreground hover:text-primary">
             Community
           </Button>

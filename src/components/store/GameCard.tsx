@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +20,7 @@ interface GameCardProps {
 }
 
 const GameCard = ({
+  id,
   title,
   developer,
   image,
@@ -32,6 +34,7 @@ const GameCard = ({
 }: GameCardProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
+  const navigate = useNavigate();
 
   const discountPercentage = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
 
@@ -40,6 +43,7 @@ const GameCard = ({
       className={`game-card group cursor-pointer transition-all duration-300 ${isHovered ? 'game-card-hover' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onClick={() => navigate(`/game/${id}`)}
     >
       <CardContent className="p-0">
         {/* Game Image */}

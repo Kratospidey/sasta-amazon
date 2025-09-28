@@ -1,0 +1,394 @@
+import { useParams } from "react-router-dom";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { 
+  ShoppingCart, 
+  Heart, 
+  Share2, 
+  Play, 
+  Monitor, 
+  Smartphone, 
+  Gamepad2,
+  Star,
+  ThumbsUp,
+  ChevronLeft,
+  ChevronRight
+} from "lucide-react";
+import Header from "@/components/layout/Header";
+
+const GameDetails = () => {
+  const { id } = useParams();
+  const [currentScreenshot, setCurrentScreenshot] = useState(0);
+  const [isWishlisted, setIsWishlisted] = useState(false);
+
+  // Mock game data - in real app, this would be fetched based on ID
+  const game = {
+    id: id || "1",
+    title: "Elden Ring",
+    developer: "FromSoftware",
+    publisher: "Bandai Namco",
+    price: "$39.99",
+    originalPrice: "$59.99",
+    rating: 4.8,
+    reviews: 125487,
+    releaseDate: "February 25, 2022",
+    platforms: ["PC", "PlayStation", "Xbox"],
+    genres: ["Action", "RPG", "Open World"],
+    description: "THE NEW FANTASY ACTION RPG. Rise, Tarnished, and be guided by grace to brandish the power of the Elden Ring and become an Elden Lord in the Lands Between. In the Lands Between ruled by Queen Marika the Eternal, the Elden Ring, the source of the Erdtree, has been shattered.",
+    features: [
+      "Massive open-world exploration",
+      "Deep character customization",
+      "Challenging boss battles",
+      "Multiplayer cooperative play",
+      "Rich storytelling and lore"
+    ],
+    screenshots: [
+      "/game-1.jpg",
+      "/game-2.jpg", 
+      "/game-3.jpg",
+      "/game-4.jpg"
+    ],
+    systemRequirements: {
+      minimum: {
+        os: "Windows 10",
+        processor: "Intel Core i5-8400 / AMD Ryzen 3 3300X",
+        memory: "12 GB RAM",
+        graphics: "NVIDIA GeForce GTX 1060 3GB / AMD Radeon RX 580 4GB",
+        storage: "60 GB available space"
+      },
+      recommended: {
+        os: "Windows 10/11",
+        processor: "Intel Core i7-8700K / AMD Ryzen 5 3600X",
+        memory: "16 GB RAM", 
+        graphics: "NVIDIA GeForce GTX 1070 / AMD Radeon RX Vega 56",
+        storage: "60 GB available space"
+      }
+    }
+  };
+
+  const reviews = [
+    {
+      id: 1,
+      user: "GamerPro2023",
+      rating: 5,
+      comment: "Absolutely incredible game! The world design is breathtaking and the gameplay is challenging but fair.",
+      date: "2 days ago",
+      helpful: 156
+    },
+    {
+      id: 2,
+      user: "RPGLover",
+      rating: 4,
+      comment: "Great game with amazing visuals. The difficulty can be frustrating at times but very rewarding.",
+      date: "1 week ago", 
+      helpful: 89
+    }
+  ];
+
+  const nextScreenshot = () => {
+    setCurrentScreenshot((prev) => (prev + 1) % game.screenshots.length);
+  };
+
+  const prevScreenshot = () => {
+    setCurrentScreenshot((prev) => (prev - 1 + game.screenshots.length) % game.screenshots.length);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Header />
+      
+      {/* Game Header */}
+      <div className="relative h-[400px] bg-gaming-surface">
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent" />
+        <div className="container mx-auto px-4 h-full flex items-center relative z-10">
+          <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
+            <img 
+              src="/game-1.jpg" 
+              alt={game.title}
+              className="w-48 h-64 object-cover rounded-xl shadow-lg"
+            />
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                {game.genres.map((genre) => (
+                  <Badge key={genre} variant="secondary">{genre}</Badge>
+                ))}
+              </div>
+              <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">{game.title}</h1>
+              <p className="text-lg text-white/80 mb-4">{game.developer} • {game.releaseDate}</p>
+              
+              <div className="flex items-center gap-4 mb-6">
+                <div className="flex items-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <Star 
+                      key={i} 
+                      className={`h-5 w-5 ${i < Math.floor(game.rating) ? 'text-yellow-400 fill-current' : 'text-gray-400'}`} 
+                    />
+                  ))}
+                  <span className="text-white ml-2">{game.rating} ({game.reviews.toLocaleString()} reviews)</span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 mb-6">
+                <div className="flex items-center gap-2">
+                  {game.platforms.map((platform) => (
+                    <div key={platform} className="flex items-center gap-1 text-white/80">
+                      {platform === 'PC' && <Monitor className="h-4 w-4" />}
+                      {platform === 'PlayStation' && <Gamepad2 className="h-4 w-4" />}
+                      {platform === 'Xbox' && <Gamepad2 className="h-4 w-4" />}
+                      {platform === 'Mobile' && <Smartphone className="h-4 w-4" />}
+                      <span className="text-sm">{platform}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-3xl font-bold text-white">{game.price}</span>
+                {game.originalPrice && (
+                  <span className="text-lg text-white/60 line-through">{game.originalPrice}</span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Sticky Buy Section */}
+      <div className="sticky top-16 z-40 bg-background/95 backdrop-blur border-b border-border">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <h2 className="text-xl font-semibold">{game.title}</h2>
+              <span className="text-2xl font-bold text-primary">{game.price}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsWishlisted(!isWishlisted)}
+                className={isWishlisted ? "text-red-500 border-red-500" : ""}
+              >
+                <Heart className={`h-4 w-4 mr-2 ${isWishlisted ? 'fill-current' : ''}`} />
+                {isWishlisted ? "Wishlisted" : "Wishlist"}
+              </Button>
+              <Button variant="outline" size="sm">
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary-hover">
+                <ShoppingCart className="h-4 w-4 mr-2" />
+                Add to Cart
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Screenshot Gallery */}
+            <Card>
+              <CardContent className="p-0">
+                <div className="relative">
+                  <img 
+                    src={game.screenshots[currentScreenshot]} 
+                    alt={`Screenshot ${currentScreenshot + 1}`}
+                    className="w-full h-64 md:h-96 object-cover"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70"
+                    onClick={prevScreenshot}
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black/50 text-white hover:bg-black/70"
+                    onClick={nextScreenshot}
+                  >
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </div>
+                <div className="flex gap-2 p-4 overflow-x-auto">
+                  {game.screenshots.map((screenshot, index) => (
+                    <button
+                      key={index}
+                      onClick={() => setCurrentScreenshot(index)}
+                      className={`flex-shrink-0 w-20 h-12 rounded border-2 overflow-hidden ${
+                        index === currentScreenshot ? 'border-primary' : 'border-transparent'
+                      }`}
+                    >
+                      <img src={screenshot} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Description */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-4">About This Game</h3>
+                <p className="text-muted-foreground leading-relaxed mb-6">{game.description}</p>
+                
+                <h4 className="font-semibold mb-3">Key Features</h4>
+                <ul className="space-y-2">
+                  {game.features.map((feature, index) => (
+                    <li key={index} className="flex items-center gap-2 text-muted-foreground">
+                      <div className="w-2 h-2 bg-primary rounded-full" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </CardContent>
+            </Card>
+
+            {/* System Requirements */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-4">System Requirements</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 className="font-semibold mb-3">Minimum</h4>
+                    <div className="space-y-2 text-sm">
+                      <div><span className="font-medium">OS:</span> {game.systemRequirements.minimum.os}</div>
+                      <div><span className="font-medium">Processor:</span> {game.systemRequirements.minimum.processor}</div>
+                      <div><span className="font-medium">Memory:</span> {game.systemRequirements.minimum.memory}</div>
+                      <div><span className="font-medium">Graphics:</span> {game.systemRequirements.minimum.graphics}</div>
+                      <div><span className="font-medium">Storage:</span> {game.systemRequirements.minimum.storage}</div>
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold mb-3">Recommended</h4>
+                    <div className="space-y-2 text-sm">
+                      <div><span className="font-medium">OS:</span> {game.systemRequirements.recommended.os}</div>
+                      <div><span className="font-medium">Processor:</span> {game.systemRequirements.recommended.processor}</div>
+                      <div><span className="font-medium">Memory:</span> {game.systemRequirements.recommended.memory}</div>
+                      <div><span className="font-medium">Graphics:</span> {game.systemRequirements.recommended.graphics}</div>
+                      <div><span className="font-medium">Storage:</span> {game.systemRequirements.recommended.storage}</div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Reviews */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="text-xl font-semibold mb-4">Customer Reviews</h3>
+                <div className="space-y-4">
+                  {reviews.map((review) => (
+                    <div key={review.id} className="border-b border-border pb-4 last:border-b-0">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{review.user}</span>
+                          <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                              <Star 
+                                key={i} 
+                                className={`h-4 w-4 ${i < review.rating ? 'text-yellow-400 fill-current' : 'text-gray-400'}`} 
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <span className="text-sm text-muted-foreground">{review.date}</span>
+                      </div>
+                      <p className="text-muted-foreground mb-2">{review.comment}</p>
+                      <Button variant="ghost" size="sm" className="text-muted-foreground p-0 h-auto">
+                        <ThumbsUp className="h-4 w-4 mr-1" />
+                        Helpful ({review.helpful})
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Purchase Card */}
+            <Card className="sticky top-32">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-2xl font-bold">{game.price}</span>
+                  {game.originalPrice && (
+                    <>
+                      <span className="text-lg text-muted-foreground line-through">{game.originalPrice}</span>
+                      <Badge variant="destructive">33% OFF</Badge>
+                    </>
+                  )}
+                </div>
+                
+                <div className="space-y-3">
+                  <Button className="w-full bg-primary text-primary-foreground hover:bg-primary-hover">
+                    <ShoppingCart className="h-4 w-4 mr-2" />
+                    Add to Cart
+                  </Button>
+                  <Button variant="outline" className="w-full">
+                    <Heart className="h-4 w-4 mr-2" />
+                    Add to Wishlist
+                  </Button>
+                  <Button variant="outline" className="w-full">
+                    <Play className="h-4 w-4 mr-2" />
+                    Watch Trailer
+                  </Button>
+                </div>
+
+                <Separator className="my-4" />
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Developer:</span>
+                    <span>{game.developer}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Publisher:</span>
+                    <span>{game.publisher}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Release Date:</span>
+                    <span>{game.releaseDate}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Related Games */}
+            <Card>
+              <CardContent className="p-6">
+                <h3 className="font-semibold mb-4">You Might Also Like</h3>
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex gap-3">
+                      <img 
+                        src={`/game-${i + 1}.jpg`} 
+                        alt={`Related game ${i}`}
+                        className="w-16 h-20 object-cover rounded"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-sm truncate">Related Game {i}</h4>
+                        <p className="text-sm text-muted-foreground">Action, RPG</p>
+                        <p className="text-sm font-medium">$29.99</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default GameDetails;

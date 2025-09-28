@@ -1,4 +1,6 @@
 import Header from "@/components/layout/Header";
+import ScrollingBanner from "@/components/store/ScrollingBanner";
+import SearchBar from "@/components/store/SearchBar";
 import HeroBanner from "@/components/store/HeroBanner";
 import FilterSidebar from "@/components/store/FilterSidebar";
 import GameGrid from "@/components/store/GameGrid";
@@ -7,8 +9,12 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <Header />
+      <ScrollingBanner />
       
       <main className="container mx-auto px-4 py-8">
+        {/* Search Bar */}
+        <SearchBar />
+
         {/* Hero Banner */}
         <section className="mb-12">
           <HeroBanner />
