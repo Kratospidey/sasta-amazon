@@ -130,7 +130,7 @@
   
   /* Compact Game Card */
   .compact-game-card {
-    @apply w-full max-w-xs;
+    @apply w-full;
   }
   
   .compact-game-card.card-hovered {

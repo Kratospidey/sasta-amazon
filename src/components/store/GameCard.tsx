@@ -145,19 +145,19 @@ const GameCard = ({
           </div>
 
           {/* Price and Add to Cart */}
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between w-full">
+            <div className="flex-1">
               {originalPrice && originalPrice > price ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm line-through text-gray-400">
+                <div className="flex flex-col">
+                  <span className="text-xs line-through text-gray-400">
                     ${originalPrice}
                   </span>
-                  <span className="text-xl font-bold text-white">
+                  <span className="text-2xl font-bold text-white">
                     ${price}
                   </span>
                 </div>
               ) : (
-                <span className="text-xl font-bold text-white">
+                <span className="text-2xl font-bold text-white">
                   {price === 0 ? 'Free' : `$${price}`}
                 </span>
               )}
@@ -165,11 +165,10 @@ const GameCard = ({
             
             <Button 
               size="sm"
-              className="px-3 py-1.5 text-xs font-medium bg-primary hover:bg-primary/90 text-white rounded-lg transition-all duration-200"
+              className="px-2 py-1 text-xs font-medium bg-primary hover:bg-primary/90 text-white rounded-md transition-all duration-200 ml-2"
               onClick={handleAddToCart}
             >
-              <ShoppingCart className="h-3 w-3 mr-1" />
-              Add to Cart
+              <ShoppingCart className="h-3 w-3" />
             </Button>
           </div>
         </div>
