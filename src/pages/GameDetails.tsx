@@ -70,6 +70,10 @@ import witcherScreenshot1 from "@/assets/witcher-screenshot-1.jpg";
 import witcherScreenshot2 from "@/assets/witcher-screenshot-2.jpg";
 import witcherScreenshot3 from "@/assets/witcher-screenshot-3.jpg";
 import witcherScreenshot4 from "@/assets/witcher-screenshot-4.jpg";
+import stardewValleyCover from "@/assets/stardew-valley-cover.png";
+import stardewValleyScreenshot1 from "@/assets/stardew-valley-screenshot-1.png";
+import stardewValleyScreenshot2 from "@/assets/stardew-valley-screenshot-2.png";
+import stardewValleyScreenshot3 from "@/assets/stardew-valley-screenshot-3.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -552,6 +556,53 @@ const GameDetails = () => {
             memory: "8 GB RAM",
             graphics: "Nvidia GPU GeForce GTX 770 / AMD GPU Radeon R9 290",
             storage: "35 GB available space"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "15") {
+      return {
+        id: gameId,
+        title: "Stardew Valley",
+        developer: "ConcernedApe",
+        publisher: "ConcernedApe",
+        price: "$14.99",
+        originalPrice: null,
+        rating: 4.9,
+        reviews: 89000,
+        releaseDate: "February 26, 2016",
+        platforms: ["PC", "PlayStation", "Xbox", "Nintendo Switch", "Mobile"],
+        genres: ["Simulation", "Indie", "RPG"],
+        description: "Stardew Valley is an open-ended country-life RPG! You've inherited your grandfather's old farm plot in Stardew Valley. Armed with hand-me-down tools and a few coins, you set out to begin your new life. Can you learn to live off the land and turn these overgrown fields into a thriving home?",
+        features: [
+          "Turn your overgrown field into a lively farm",
+          "Raise animals, grow crops, start an orchard",
+          "Customize your farmer and home",
+          "Become part of the local community",
+          "Explore vast, mysterious caves"
+        ],
+        screenshots: [
+          stardewValleyCover,
+          stardewValleyScreenshot1,
+          stardewValleyScreenshot2,
+          stardewValleyScreenshot3
+        ],
+        coverImage: stardewValleyCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows Vista or greater",
+            processor: "2 Ghz",
+            memory: "2 GB RAM",
+            graphics: "256 MB video memory, shader model 3.0+",
+            storage: "500 MB available space"
+          },
+          recommended: {
+            os: "Windows 10",
+            processor: "3 Ghz",
+            memory: "4 GB RAM",
+            graphics: "Discrete graphics card",
+            storage: "500 MB available space"
           }
         }
       };

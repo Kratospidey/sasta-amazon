@@ -13,6 +13,7 @@ import minecraftCover from "@/assets/minecraft-cover.png";
 import apexLegendsCover from "@/assets/apex-legends-cover.png";
 import codMw3Cover from "@/assets/cod-mw3-cover.jpg";
 import witcherCover from "@/assets/witcher-cover.png";
+import stardewValleyCover from "@/assets/stardew-valley-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -175,7 +176,7 @@ const GameGrid = () => {
       id: "15",
       title: "Stardew Valley",
       developer: "ConcernedApe",
-      image: game4,
+      image: stardewValleyCover,
       price: 14.99,
       rating: 4.9,
       reviewCount: 89000,
