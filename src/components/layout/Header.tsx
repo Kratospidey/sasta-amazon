@@ -1,8 +1,9 @@
-import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useCart } from "@/contexts/CartContext";
+import { useFilters } from "@/contexts/FilterContext";
 import { 
   Search, 
   ShoppingCart, 
@@ -13,8 +14,10 @@ import {
 } from "lucide-react";
 
 const Header = () => {
-  const [cartCount] = useState(3);
+  const { getTotalItems } = useCart();
+  const { setSearchTerm } = useFilters();
   const navigate = useNavigate();
+  const cartCount = getTotalItems();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -67,6 +70,7 @@ const Header = () => {
             <Input 
               placeholder="Search games, genres, developers..." 
               className="pl-10 bg-gaming-surface border-border"
+              onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>

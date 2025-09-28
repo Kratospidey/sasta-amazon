@@ -1,17 +1,14 @@
 import GameCard from "./GameCard";
+import { useFilters } from "@/contexts/FilterContext";
 import eldenRingCover from "@/assets/elden-ring-cover.png";
 import genshinImpactCover from "@/assets/genshin-impact-cover.png";
 import cosmicWarfareCover from "@/assets/cosmic-warfare-cover.png";
-import game4 from "@/assets/game-4.jpg";
-import game5 from "@/assets/game-5.jpg";
-import game6 from "@/assets/game-6.jpg";
 import amongUsCover from "@/assets/among-us-cover.png";
 import valorantCover from "@/assets/valorant-cover.png";
 import fortniteCover from "@/assets/fortnite-cover.png";
 import cyberpunkCover from "@/assets/cyberpunk-cover.png";
 import minecraftCover from "@/assets/minecraft-cover.png";
 import apexLegendsCover from "@/assets/apex-legends-cover.png";
-import codMw3Cover from "@/assets/cod-mw3-cover.jpg";
 import witcherCover from "@/assets/witcher-cover.png";
 import stardewValleyCover from "@/assets/stardew-valley-cover.png";
 import fallGuysCover from "@/assets/fall-guys-cover.png";
@@ -19,7 +16,9 @@ import rocketLeagueCover from "@/assets/rocket-league-cover.png";
 import leagueOfLegendsCover from "@/assets/league-of-legends-cover.png";
 
 const GameGrid = () => {
-  const games = [
+  const { filters } = useFilters();
+  
+  const allGames = [
     {
       id: "1",
       title: "Elden Ring",
@@ -56,38 +55,6 @@ const GameGrid = () => {
       tags: ["Sci-Fi", "Action"],
       onSale: true,
       featured: true,
-    },
-    {
-      id: "4",
-      title: "Enchanted Forest",
-      developer: "Puzzle Magic",
-      image: game4,
-      price: 19.99,
-      rating: 4.7,
-      reviewCount: 6780,
-      tags: ["Puzzle", "Adventure"],
-    },
-    {
-      id: "5",
-      title: "Shadow Manor",
-      developer: "Horror House",
-      image: game5,
-      price: 34.99,
-      originalPrice: 44.99,
-      rating: 4.3,
-      reviewCount: 9240,
-      tags: ["Horror", "Survival"],
-      onSale: true,
-    },
-    {
-      id: "6",
-      title: "Empire Builder",
-      developer: "Strategy Masters",
-      image: game6,
-      price: 44.99,
-      rating: 4.5,
-      reviewCount: 11230,
-      tags: ["Strategy", "Simulation"],
     },
     {
       id: "7",
@@ -141,16 +108,6 @@ const GameGrid = () => {
       rating: 4.3,
       reviewCount: 325000,
       tags: ["Battle Royale", "Hero Shooter"],
-    },
-    {
-      id: "12", 
-      title: "Call of Duty: Warzone",
-      developer: "Activision",
-      image: game6,
-      price: 0,
-      rating: 4.2,
-      reviewCount: 240000,
-      tags: ["Battle Royale", "Shooter"],
     },
     {
       id: "13",
@@ -218,11 +175,67 @@ const GameGrid = () => {
     },
   ];
 
+  // Filter games based on current filters
+  const filteredGames = allGames.filter(game => {
+    // Search term filter
+    if (filters.searchTerm && !game.title.toLowerCase().includes(filters.searchTerm.toLowerCase()) &&
+        !game.developer.toLowerCase().includes(filters.searchTerm.toLowerCase()) &&
+        !game.tags.some(tag => tag.toLowerCase().includes(filters.searchTerm.toLowerCase()))) {
+      return false;
+    }
+
+    // Genre filter
+    if (filters.selectedGenres.length > 0 && 
+        !filters.selectedGenres.some(genre => game.tags.includes(genre))) {
+      return false;
+    }
+
+    // Price range filter
+    if (game.price < filters.priceRange[0] || game.price > filters.priceRange[1]) {
+      return false;
+    }
+
+    // Free only filter
+    if (filters.showFreeOnly && game.price > 0) {
+      return false;
+    }
+
+    // On sale only filter
+    if (filters.showOnSaleOnly && !game.onSale) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Sort games based on selected sort option
+  const sortedGames = [...filteredGames].sort((a, b) => {
+    switch (filters.sortBy) {
+      case 'name':
+        return a.title.localeCompare(b.title);
+      case 'price-low':
+        return a.price - b.price;
+      case 'price-high':
+        return b.price - a.price;
+      case 'rating':
+        return b.rating - a.rating;
+      case 'popular':
+      default:
+        return b.reviewCount - a.reviewCount;
+    }
+  });
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
-      {games.map((game) => (
+      {sortedGames.map((game) => (
         <GameCard key={game.id} {...game} />
       ))}
+      {sortedGames.length === 0 && (
+        <div className="col-span-full text-center py-12 text-muted-foreground">
+          <p className="text-lg font-medium">No games found</p>
+          <p className="text-sm">Try adjusting your filters or search term</p>
+        </div>
+      )}
     </div>
   );
 };

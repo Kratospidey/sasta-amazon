@@ -4,8 +4,11 @@ import SearchBar from "@/components/store/SearchBar";
 import HeroBanner from "@/components/store/HeroBanner";
 import FilterSidebar from "@/components/store/FilterSidebar";
 import GameGrid from "@/components/store/GameGrid";
+import { useFilters } from "@/contexts/FilterContext";
 
 const Index = () => {
+  const { filters } = useFilters();
+  
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -35,7 +38,7 @@ const Index = () => {
               </div>
               
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <span>Showing 1,247 games</span>
+                <span>Browse our curated collection</span>
               </div>
             </div>
 

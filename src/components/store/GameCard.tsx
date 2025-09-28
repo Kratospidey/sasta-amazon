@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { useCart } from "@/contexts/CartContext";
 import { Star, ShoppingCart, Heart, Play } from "lucide-react";
 
 interface GameCardProps {
@@ -35,8 +36,21 @@ const GameCard = ({
   const [isHovered, setIsHovered] = useState(false);
   const [isWishlisted, setIsWishlisted] = useState(false);
   const navigate = useNavigate();
+  const { addToCart } = useCart();
 
   const discountPercentage = originalPrice ? Math.round(((originalPrice - price) / originalPrice) * 100) : 0;
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    addToCart({
+      id,
+      title,
+      developer,
+      image,
+      price,
+      originalPrice
+    });
+  };
 
   return (
     <Card 
@@ -143,7 +157,7 @@ const GameCard = ({
             <Button 
               size="sm" 
               className="h-7 px-2"
-              onClick={(e) => e.stopPropagation()}
+              onClick={handleAddToCart}
             >
               <ShoppingCart className="h-3 w-3 mr-1" />
               Add

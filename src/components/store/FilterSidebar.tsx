@@ -1,10 +1,11 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useFilters } from "@/contexts/FilterContext";
 import { 
   Collapsible,
   CollapsibleContent,
@@ -13,52 +14,27 @@ import {
 import { ChevronDown, X } from "lucide-react";
 
 const FilterSidebar = () => {
-  const [priceRange, setPriceRange] = useState([0, 100]);
-  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
-  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
-  const [selectedFeatures, setSelectedFeatures] = useState<string[]>([]);
+  const { 
+    filters, 
+    toggleGenre, 
+    setPriceRange, 
+    setSortBy, 
+    toggleFreeOnly, 
+    toggleOnSaleOnly, 
+    clearFilters 
+  } = useFilters();
 
   const genres = [
     "Action", "Adventure", "RPG", "Shooter", "Strategy", "Simulation", 
-    "Sports", "Racing", "Horror", "Puzzle", "Platformer", "Indie", "Multiplayer"
+    "Sports", "Racing", "Horror", "Puzzle", "Platformer", "Indie", "Multiplayer",
+    "Open World", "Sci-Fi", "Fantasy", "Battle Royale", "MOBA", "Sandbox", 
+    "Creative", "Cyberpunk", "Hero Shooter", "Tactical", "Anime", "Social", 
+    "Deduction", "Party"
   ];
 
-  const platforms = ["PC", "PlayStation", "Xbox", "Nintendo Switch", "Mobile", "Cloud Gaming"];
-  
-  const features = ["Free to Play", "On Sale", "Early Access", "VR Support", "Controller Support"];
-
-  const toggleFilter = (item: string, category: 'genres' | 'platforms' | 'features') => {
-    const setters = {
-      genres: setSelectedGenres,
-      platforms: setSelectedPlatforms,
-      features: setSelectedFeatures,
-    };
-    
-    const getters = {
-      genres: selectedGenres,
-      platforms: selectedPlatforms,
-      features: selectedFeatures,
-    };
-
-    const current = getters[category];
-    const setter = setters[category];
-    
-    if (current.includes(item)) {
-      setter(current.filter(i => i !== item));
-    } else {
-      setter([...current, item]);
-    }
-  };
-
-  const clearAllFilters = () => {
-    setPriceRange([0, 100]);
-    setSelectedGenres([]);
-    setSelectedPlatforms([]);
-    setSelectedFeatures([]);
-  };
-
-  const hasActiveFilters = selectedGenres.length > 0 || selectedPlatforms.length > 0 || 
-    selectedFeatures.length > 0 || priceRange[0] > 0 || priceRange[1] < 100;
+  const hasActiveFilters = filters.selectedGenres.length > 0 || 
+    filters.showFreeOnly || filters.showOnSaleOnly || 
+    filters.priceRange[0] > 0 || filters.priceRange[1] < 100;
 
   return (
     <div className="filter-sidebar w-72 bg-card rounded-xl p-6 border border-border">
@@ -68,7 +44,7 @@ const FilterSidebar = () => {
           <Button 
             variant="ghost" 
             size="sm" 
-            onClick={clearAllFilters}
+            onClick={clearFilters}
             className="text-muted-foreground hover:text-foreground"
           >
             Clear All
@@ -76,11 +52,30 @@ const FilterSidebar = () => {
         )}
       </div>
 
+      {/* Sort By */}
+      {hasActiveFilters && (
+        <div className="mb-6">
+          <Label className="text-sm font-medium mb-3 block">Sort By</Label>
+          <Select value={filters.sortBy} onValueChange={(value: any) => setSortBy(value)}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="popular">Most Popular</SelectItem>
+              <SelectItem value="name">Name A-Z</SelectItem>
+              <SelectItem value="price-low">Price: Low to High</SelectItem>
+              <SelectItem value="price-high">Price: High to Low</SelectItem>
+              <SelectItem value="rating">Highest Rated</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* Active Filters */}
       {hasActiveFilters && (
         <div className="mb-6">
           <div className="flex flex-wrap gap-2">
-            {selectedGenres.map(genre => (
+            {filters.selectedGenres.map(genre => (
               <Badge 
                 key={genre} 
                 variant="secondary" 
@@ -89,36 +84,22 @@ const FilterSidebar = () => {
                 {genre}
                 <X 
                   className="h-3 w-3 cursor-pointer" 
-                  onClick={() => toggleFilter(genre, 'genres')}
+                  onClick={() => toggleGenre(genre)}
                 />
               </Badge>
             ))}
-            {selectedPlatforms.map(platform => (
-              <Badge 
-                key={platform} 
-                variant="secondary" 
-                className="flex items-center gap-1"
-              >
-                {platform}
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => toggleFilter(platform, 'platforms')}
-                />
+            {filters.showFreeOnly && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                Free Games
+                <X className="h-3 w-3 cursor-pointer" onClick={toggleFreeOnly} />
               </Badge>
-            ))}
-            {selectedFeatures.map(feature => (
-              <Badge 
-                key={feature} 
-                variant="secondary" 
-                className="flex items-center gap-1"
-              >
-                {feature}
-                <X 
-                  className="h-3 w-3 cursor-pointer" 
-                  onClick={() => toggleFilter(feature, 'features')}
-                />
+            )}
+            {filters.showOnSaleOnly && (
+              <Badge variant="secondary" className="flex items-center gap-1">
+                On Sale
+                <X className="h-3 w-3 cursor-pointer" onClick={toggleOnSaleOnly} />
               </Badge>
-            ))}
+            )}
           </div>
           <Separator className="mt-4" />
         </div>
@@ -133,15 +114,15 @@ const FilterSidebar = () => {
         <CollapsibleContent className="pt-4">
           <div className="px-2">
             <Slider
-              value={priceRange}
-              onValueChange={setPriceRange}
+              value={filters.priceRange}
+              onValueChange={(value: [number, number]) => setPriceRange(value)}
               max={100}
               step={5}
               className="mb-4"
             />
             <div className="flex justify-between text-sm text-muted-foreground">
-              <span>${priceRange[0]}</span>
-              <span>${priceRange[1]}+</span>
+              <span>${filters.priceRange[0]}</span>
+              <span>${filters.priceRange[1]}+</span>
             </div>
           </div>
         </CollapsibleContent>
@@ -161,8 +142,8 @@ const FilterSidebar = () => {
               <div key={genre} className="flex items-center space-x-2">
                 <Checkbox
                   id={genre}
-                  checked={selectedGenres.includes(genre)}
-                  onCheckedChange={() => toggleFilter(genre, 'genres')}
+                  checked={filters.selectedGenres.includes(genre)}
+                  onCheckedChange={() => toggleGenre(genre)}
                 />
                 <Label htmlFor={genre} className="text-sm cursor-pointer">
                   {genre}
@@ -175,52 +156,34 @@ const FilterSidebar = () => {
 
       <Separator className="my-4" />
 
-      {/* Platforms */}
-      <Collapsible defaultOpen className="mb-6">
-        <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-gaming-surface rounded-lg">
-          <Label className="text-sm font-medium">Platforms</Label>
-          <ChevronDown className="h-4 w-4" />
-        </CollapsibleTrigger>
-        <CollapsibleContent className="pt-4">
-          <div className="space-y-3 px-2">
-            {platforms.map(platform => (
-              <div key={platform} className="flex items-center space-x-2">
-                <Checkbox
-                  id={platform}
-                  checked={selectedPlatforms.includes(platform)}
-                  onCheckedChange={() => toggleFilter(platform, 'platforms')}
-                />
-                <Label htmlFor={platform} className="text-sm cursor-pointer">
-                  {platform}
-                </Label>
-              </div>
-            ))}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
-
-      <Separator className="my-4" />
-
-      {/* Features */}
+      {/* Special Filters */}
       <Collapsible defaultOpen>
         <CollapsibleTrigger className="flex items-center justify-between w-full p-2 hover:bg-gaming-surface rounded-lg">
-          <Label className="text-sm font-medium">Features</Label>
+          <Label className="text-sm font-medium">Special Offers</Label>
           <ChevronDown className="h-4 w-4" />
         </CollapsibleTrigger>
         <CollapsibleContent className="pt-4">
           <div className="space-y-3 px-2">
-            {features.map(feature => (
-              <div key={feature} className="flex items-center space-x-2">
-                <Checkbox
-                  id={feature}
-                  checked={selectedFeatures.includes(feature)}
-                  onCheckedChange={() => toggleFilter(feature, 'features')}
-                />
-                <Label htmlFor={feature} className="text-sm cursor-pointer">
-                  {feature}
-                </Label>
-              </div>
-            ))}
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="free-games"
+                checked={filters.showFreeOnly}
+                onCheckedChange={toggleFreeOnly}
+              />
+              <Label htmlFor="free-games" className="text-sm cursor-pointer">
+                Free Games Only
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="on-sale"
+                checked={filters.showOnSaleOnly}
+                onCheckedChange={toggleOnSaleOnly}
+              />
+              <Label htmlFor="on-sale" className="text-sm cursor-pointer">
+                On Sale Only
+              </Label>
+            </div>
           </div>
         </CollapsibleContent>
       </Collapsible>

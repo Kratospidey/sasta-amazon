@@ -944,7 +944,7 @@ const GameDetails = () => {
                   <img 
                     src={game.screenshots[currentScreenshot]} 
                     alt={`Screenshot ${currentScreenshot + 1}`}
-                    className="w-full h-64 md:h-96 object-cover"
+                    className="w-full h-auto max-h-96 object-contain bg-black rounded-lg"
                   />
                   <Button
                     variant="ghost"

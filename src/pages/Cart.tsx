@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useCart } from "@/contexts/CartContext";
 import { 
   ShoppingCart, 
   Trash2, 
@@ -18,68 +19,10 @@ import {
 } from "lucide-react";
 import Header from "@/components/layout/Header";
 
-interface CartItem {
-  id: string;
-  title: string;
-  developer: string;
-  image: string;
-  price: number;
-  originalPrice?: number;
-  quantity: number;
-  type: 'game' | 'dlc' | 'premium';
-}
-
 const Cart = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: "1",
-      title: "Elden Ring",
-      developer: "FromSoftware",
-      image: "/game-1.jpg",
-      price: 39.99,
-      originalPrice: 59.99,
-      quantity: 1,
-      type: 'game'
-    },
-    {
-      id: "2",
-      title: "Genshin Impact - Welkin Moon",
-      developer: "miHoYo",
-      image: "/game-2.jpg",
-      price: 4.99,
-      quantity: 2,
-      type: 'premium'
-    },
-    {
-      id: "3",
-      title: "Valorant - Agent Pack",
-      developer: "Riot Games",
-      image: "/game-3.jpg",
-      price: 19.99,
-      originalPrice: 24.99,
-      quantity: 1,
-      type: 'dlc'
-    }
-  ]);
-
+  const { items, removeFromCart, updateQuantity, getTotalPrice, getTotalItems } = useCart();
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
-
-  const updateQuantity = (id: string, newQuantity: number) => {
-    if (newQuantity === 0) {
-      removeItem(id);
-      return;
-    }
-    setCartItems(items => 
-      items.map(item => 
-        item.id === id ? { ...item, quantity: newQuantity } : item
-      )
-    );
-  };
-
-  const removeItem = (id: string) => {
-    setCartItems(items => items.filter(item => item.id !== id));
-  };
 
   const applyPromoCode = () => {
     if (promoCode.toLowerCase() === "save10") {
@@ -88,8 +31,8 @@ const Cart = () => {
     }
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const savings = cartItems.reduce((sum, item) => {
+  const subtotal = getTotalPrice();
+  const savings = items.reduce((sum, item) => {
     if (item.originalPrice) {
       return sum + ((item.originalPrice - item.price) * item.quantity);
     }
@@ -116,7 +59,7 @@ const Cart = () => {
     }
   ];
 
-  if (cartItems.length === 0) {
+  if (items.length === 0) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -141,13 +84,13 @@ const Cart = () => {
       <div className="container mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Shopping Cart</h1>
-          <p className="text-muted-foreground">{cartItems.length} items in your cart</p>
+          <p className="text-muted-foreground">{items.length} items in your cart</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-4">
-            {cartItems.map((item) => (
+            {items.map((item) => (
               <Card key={item.id}>
                 <CardContent className="p-6">
                   <div className="flex gap-4">
@@ -166,13 +109,13 @@ const Cart = () => {
                             variant="secondary" 
                             className="mt-1 text-xs"
                           >
-                            {item.type === 'game' ? 'Game' : item.type === 'dlc' ? 'DLC' : 'Premium'}
+                            Game
                           </Badge>
                         </div>
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeItem(item.id)}
+                          onClick={() => removeFromCart(item.id)}
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -297,7 +240,7 @@ const Cart = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex justify-between text-sm">
-                  <span>Subtotal ({cartItems.length} items)</span>
+                  <span>Subtotal ({items.length} items)</span>
                   <span>${subtotal.toFixed(2)}</span>
                 </div>
                 
