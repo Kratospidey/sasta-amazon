@@ -6,6 +6,7 @@ import game4 from "@/assets/game-4.jpg";
 import game5 from "@/assets/game-5.jpg";
 import game6 from "@/assets/game-6.jpg";
 import amongUsCover from "@/assets/among-us-cover.png";
+import valorantCover from "@/assets/valorant-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -92,7 +93,7 @@ const GameGrid = () => {
       id: "8",
       title: "Valorant",
       developer: "Riot Games", 
-      image: game4,
+      image: valorantCover,
       price: 0,
       rating: 4.4,
       reviewCount: 280000,

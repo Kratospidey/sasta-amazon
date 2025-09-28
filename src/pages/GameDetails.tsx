@@ -35,6 +35,11 @@ import amongUsScreenshot1 from "@/assets/among-us-screenshot-1.png";
 import amongUsScreenshot2 from "@/assets/among-us-screenshot-2.png";
 import amongUsScreenshot3 from "@/assets/among-us-screenshot-3.png";
 import amongUsScreenshot4 from "@/assets/among-us-screenshot-4.png";
+import valorantCover from "@/assets/valorant-cover.png";
+import valorantScreenshot1 from "@/assets/valorant-screenshot-1.png";
+import valorantScreenshot2 from "@/assets/valorant-screenshot-2.png";
+import valorantScreenshot3 from "@/assets/valorant-screenshot-3.png";
+import valorantScreenshot4 from "@/assets/valorant-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -181,6 +186,54 @@ const GameDetails = () => {
             memory: "2 GB RAM",
             graphics: "Graphics card with DX11 support",
             storage: "500 MB available space"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "8") {
+      return {
+        id: gameId,
+        title: "Valorant",
+        developer: "Riot Games",
+        publisher: "Riot Games",
+        price: "Free",
+        originalPrice: null,
+        rating: 4.4,
+        reviews: 280000,
+        releaseDate: "June 2, 2020",
+        platforms: ["PC"],
+        genres: ["Tactical Shooter", "FPS", "Competitive"],
+        description: "Blend your style and experience on a global, competitive stage. You have 13 rounds to attack and defend your side using sharp gunplay and tactical abilities. And, with one life per-round, you'll need to think faster than your opponent if you want to survive.",
+        features: [
+          "Precise gunplay with first-shot accuracy",
+          "Unique agent abilities and ultimates",
+          "Competitive ranked system",
+          "13-round tactical matches",
+          "Regular content updates and new agents"
+        ],
+        screenshots: [
+          valorantCover,
+          valorantScreenshot1,
+          valorantScreenshot2,
+          valorantScreenshot3,
+          valorantScreenshot4
+        ],
+        coverImage: valorantCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 7/8/10 64-bit",
+            processor: "Intel i3-370M",
+            memory: "4 GB RAM",
+            graphics: "Intel HD 3000",
+            storage: "8 GB available space"
+          },
+          recommended: {
+            os: "Windows 10 64-bit",
+            processor: "Intel i5-4460 3.2GHz",
+            memory: "8 GB RAM",
+            graphics: "GTX 1050 Ti",
+            storage: "8 GB available space"
           }
         }
       };
