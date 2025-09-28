@@ -11,6 +11,7 @@ import fortniteCover from "@/assets/fortnite-cover.png";
 import cyberpunkCover from "@/assets/cyberpunk-cover.png";
 import minecraftCover from "@/assets/minecraft-cover.png";
 import apexLegendsCover from "@/assets/apex-legends-cover.png";
+import codMw3Cover from "@/assets/cod-mw3-cover.jpg";
 
 const GameGrid = () => {
   const games = [
@@ -183,7 +184,7 @@ const GameGrid = () => {
       id: "16",
       title: "Call of Duty: MW3",
       developer: "Activision",
-      image: game5,
+      image: codMw3Cover,
       price: 69.99,
       rating: 4.0,
       reviewCount: 156000,

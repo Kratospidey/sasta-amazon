@@ -60,6 +60,11 @@ import apexLegendsScreenshot1 from "@/assets/apex-legends-screenshot-1.png";
 import apexLegendsScreenshot2 from "@/assets/apex-legends-screenshot-2.png";
 import apexLegendsScreenshot3 from "@/assets/apex-legends-screenshot-3.png";
 import apexLegendsScreenshot4 from "@/assets/apex-legends-screenshot-4.png";
+import codMw3Cover from "@/assets/cod-mw3-cover.jpg";
+import codMw3Screenshot1 from "@/assets/cod-mw3-screenshot-1.png";
+import codMw3Screenshot2 from "@/assets/cod-mw3-screenshot-2.jpg";
+import codMw3Screenshot3 from "@/assets/cod-mw3-screenshot-3.png";
+import codMw3Screenshot4 from "@/assets/cod-mw3-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -446,6 +451,54 @@ const GameDetails = () => {
             memory: "8 GB RAM",
             graphics: "NVIDIA GeForce GTX 970 / AMD Radeon R9 290",
             storage: "22 GB available space"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "16") {
+      return {
+        id: gameId,
+        title: "Call of Duty: Modern Warfare III",
+        developer: "Sledgehammer Games",
+        publisher: "Activision",
+        price: "$69.99",
+        originalPrice: null,
+        rating: 4.0,
+        reviews: 156000,
+        releaseDate: "November 10, 2023",
+        platforms: ["PC", "PlayStation", "Xbox"],
+        genres: ["First-Person Shooter", "Action", "Military"],
+        description: "In the direct sequel to the record-breaking Call of Duty: Modern Warfare II, Captain Price and Task Force 141 face off against the ultimate threat. The ultranationalist war criminal Vladimir Makarov is extending his grasp across the world causing Task Force 141 to fight like never before.",
+        features: [
+          "Immersive single-player campaign",
+          "Fast-paced multiplayer combat",
+          "Zombies mode returns",
+          "Cross-platform play and progression",
+          "Regular content updates and seasons"
+        ],
+        screenshots: [
+          codMw3Cover,
+          codMw3Screenshot1,
+          codMw3Screenshot2,
+          codMw3Screenshot3,
+          codMw3Screenshot4
+        ],
+        coverImage: codMw3Cover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 10 64-bit (version 1909 or higher)",
+            processor: "Intel Core i5-6600K / AMD Ryzen 5 1400",
+            memory: "8 GB RAM",
+            graphics: "NVIDIA GeForce GTX 960 / AMD Radeon RX 470",
+            storage: "149 GB available space"
+          },
+          recommended: {
+            os: "Windows 10 64-bit (latest update)",
+            processor: "Intel Core i7-10700K / AMD Ryzen 7 3700X",
+            memory: "16 GB RAM",
+            graphics: "NVIDIA GeForce RTX 3060 / AMD Radeon RX 6600 XT",
+            storage: "149 GB available space (SSD recommended)"
           }
         }
       };
