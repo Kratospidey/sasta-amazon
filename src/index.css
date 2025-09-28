@@ -128,14 +128,14 @@
     box-shadow: var(--shadow-card-hover);
   }
   
-  /* Clean Game Card */
-  .clean-game-card {
-    @apply bg-card border border-border/50 rounded-xl overflow-hidden transition-all duration-300 shadow-lg;
+  /* Stylish Game Card with Background */
+  .stylish-game-card {
+    @apply w-full max-w-sm mx-auto;
   }
   
-  .clean-game-card.card-hover {
-    @apply scale-[1.02] shadow-xl border-primary/30;
-    box-shadow: 0 10px 40px -10px hsl(var(--primary) / 0.3);
+  .stylish-game-card.card-hovered {
+    @apply scale-[1.02] -translate-y-1;
+    filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.4));
   }
   
   .premium-glow {
