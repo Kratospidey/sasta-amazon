@@ -12,6 +12,7 @@ import cyberpunkCover from "@/assets/cyberpunk-cover.png";
 import minecraftCover from "@/assets/minecraft-cover.png";
 import apexLegendsCover from "@/assets/apex-legends-cover.png";
 import codMw3Cover from "@/assets/cod-mw3-cover.jpg";
+import witcherCover from "@/assets/witcher-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -149,14 +150,14 @@ const GameGrid = () => {
     },
     {
       id: "13",
-      title: "The Witcher 3",
+      title: "The Witcher 3: Wild Hunt",
       developer: "CD Projekt RED",
-      image: eldenRingCover,
-      price: 49.99,
+      image: witcherCover,
+      price: 39.99,
       originalPrice: 59.99,
-      rating: 4.8,
-      reviewCount: 245000,
-      tags: ["RPG", "Souls-like"],
+      rating: 4.9,
+      reviewCount: 280000,
+      tags: ["RPG", "Fantasy"],
       onSale: true,
       featured: true,
     },

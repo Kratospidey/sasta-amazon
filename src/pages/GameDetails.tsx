@@ -65,6 +65,11 @@ import codMw3Screenshot1 from "@/assets/cod-mw3-screenshot-1.png";
 import codMw3Screenshot2 from "@/assets/cod-mw3-screenshot-2.jpg";
 import codMw3Screenshot3 from "@/assets/cod-mw3-screenshot-3.png";
 import codMw3Screenshot4 from "@/assets/cod-mw3-screenshot-4.png";
+import witcherCover from "@/assets/witcher-cover.png";
+import witcherScreenshot1 from "@/assets/witcher-screenshot-1.jpg";
+import witcherScreenshot2 from "@/assets/witcher-screenshot-2.jpg";
+import witcherScreenshot3 from "@/assets/witcher-screenshot-3.jpg";
+import witcherScreenshot4 from "@/assets/witcher-screenshot-4.jpg";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -499,6 +504,54 @@ const GameDetails = () => {
             memory: "16 GB RAM",
             graphics: "NVIDIA GeForce RTX 3060 / AMD Radeon RX 6600 XT",
             storage: "149 GB available space (SSD recommended)"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "13") {
+      return {
+        id: gameId,
+        title: "The Witcher 3: Wild Hunt",
+        developer: "CD Projekt RED",
+        publisher: "CD Projekt",
+        price: "$39.99",
+        originalPrice: "$59.99",
+        rating: 4.9,
+        reviews: 280000,
+        releaseDate: "May 19, 2015",
+        platforms: ["PC", "PlayStation", "Xbox", "Nintendo Switch"],
+        genres: ["RPG", "Open World", "Fantasy"],
+        description: "The Witcher 3: Wild Hunt is a story-driven, next-generation open world role-playing game set in a visually stunning fantasy universe full of meaningful choices and impactful consequences. As geralt of Rivia, a monster hunter struggling to find his place in a world where people often prove more wicked than beasts.",
+        features: [
+          "Massive open world with over 100 hours of gameplay",
+          "Branching storylines and meaningful choices",
+          "Complete edition includes all DLCs",
+          "Enhanced graphics and gameplay mechanics",
+          "Cross-platform progression support"
+        ],
+        screenshots: [
+          witcherCover,
+          witcherScreenshot1,
+          witcherScreenshot2,
+          witcherScreenshot3,
+          witcherScreenshot4
+        ],
+        coverImage: witcherCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 7 64-bit",
+            processor: "Intel CPU Core i5-2500K 3.3GHz / AMD CPU Phenom II X4 940",
+            memory: "6 GB RAM",
+            graphics: "Nvidia GPU GeForce GTX 660 / AMD GPU Radeon HD 7870",
+            storage: "35 GB available space"
+          },
+          recommended: {
+            os: "Windows 10 64-bit",
+            processor: "Intel CPU Core i7 3770 3,4 GHz / AMD CPU AMD FX-8350 4 GHz",
+            memory: "8 GB RAM",
+            graphics: "Nvidia GPU GeForce GTX 770 / AMD GPU Radeon R9 290",
+            storage: "35 GB available space"
           }
         }
       };
