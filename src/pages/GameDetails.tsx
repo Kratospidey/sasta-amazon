@@ -74,6 +74,11 @@ import stardewValleyCover from "@/assets/stardew-valley-cover.png";
 import stardewValleyScreenshot1 from "@/assets/stardew-valley-screenshot-1.png";
 import stardewValleyScreenshot2 from "@/assets/stardew-valley-screenshot-2.png";
 import stardewValleyScreenshot3 from "@/assets/stardew-valley-screenshot-3.png";
+import fallGuysCover from "@/assets/fall-guys-cover.png";
+import fallGuysScreenshot1 from "@/assets/fall-guys-screenshot-1.png";
+import fallGuysScreenshot2 from "@/assets/fall-guys-screenshot-2.png";
+import fallGuysScreenshot3 from "@/assets/fall-guys-screenshot-3.png";
+import fallGuysScreenshot4 from "@/assets/fall-guys-screenshot-4.png";
 
 const GameDetails = () => {
   const { id } = useParams();
@@ -603,6 +608,54 @@ const GameDetails = () => {
             memory: "4 GB RAM",
             graphics: "Discrete graphics card",
             storage: "500 MB available space"
+          }
+        }
+      };
+    }
+    
+    if (gameId === "17") {
+      return {
+        id: gameId,
+        title: "Fall Guys",
+        developer: "Mediatonic",
+        publisher: "Epic Games",
+        price: "Free",
+        originalPrice: null,
+        rating: 4.2,
+        reviews: 67000,
+        releaseDate: "August 4, 2020",
+        platforms: ["PC", "PlayStation", "Xbox", "Nintendo Switch"],
+        genres: ["Party", "Multiplayer", "Battle Royale"],
+        description: "Fall Guys is a massively multiplayer party game with up to 60 players online in a free-for-all struggle through round after round of escalating chaos until one victor remains! Battle bizarre obstacles, shove through unruly competitors, and overcome the unbending laws of physics as you stumble towards greatness.",
+        features: [
+          "Massively multiplayer mayhem with up to 60 players",
+          "Endless obstacles and challenges to overcome",
+          "Tons of costumes and customization options",
+          "Regular updates with new rounds and features",
+          "Cross-platform play with friends"
+        ],
+        screenshots: [
+          fallGuysCover,
+          fallGuysScreenshot1,
+          fallGuysScreenshot2,
+          fallGuysScreenshot3,
+          fallGuysScreenshot4
+        ],
+        coverImage: fallGuysCover,
+        systemRequirements: {
+          minimum: {
+            os: "Windows 10 64bit",
+            processor: "Intel Core i5 or AMD equivalent",
+            memory: "8 GB RAM",
+            graphics: "NVIDIA GTX 660 or AMD Radeon HD 7950",
+            storage: "2 GB available space"
+          },
+          recommended: {
+            os: "Windows 10 64bit",
+            processor: "Intel Core i5 or AMD equivalent",
+            memory: "8 GB RAM",
+            graphics: "NVIDIA GTX 1060 or AMD equivalent",
+            storage: "2 GB available space"
           }
         }
       };

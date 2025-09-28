@@ -14,6 +14,7 @@ import apexLegendsCover from "@/assets/apex-legends-cover.png";
 import codMw3Cover from "@/assets/cod-mw3-cover.jpg";
 import witcherCover from "@/assets/witcher-cover.png";
 import stardewValleyCover from "@/assets/stardew-valley-cover.png";
+import fallGuysCover from "@/assets/fall-guys-cover.png";
 
 const GameGrid = () => {
   const games = [
@@ -196,7 +197,7 @@ const GameGrid = () => {
       id: "17",
       title: "Fall Guys",
       developer: "Mediatonic",
-      image: game5,
+      image: fallGuysCover,
       price: 0,
       rating: 4.2,
       reviewCount: 67000,
