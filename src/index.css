@@ -128,14 +128,14 @@
     box-shadow: var(--shadow-card-hover);
   }
   
-  /* Stylish Game Card with Background */
-  .stylish-game-card {
-    @apply w-full max-w-sm mx-auto;
+  /* Compact Game Card */
+  .compact-game-card {
+    @apply w-full max-w-xs;
   }
   
-  .stylish-game-card.card-hovered {
-    @apply scale-[1.02] -translate-y-1;
-    filter: drop-shadow(0 25px 50px rgba(0, 0, 0, 0.4));
+  .compact-game-card.card-hovered {
+    @apply scale-[1.02];
+    filter: drop-shadow(0 10px 25px rgba(0, 0, 0, 0.3));
   }
   
   .premium-glow {

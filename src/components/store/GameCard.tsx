@@ -54,35 +54,34 @@ const GameCard = ({
 
   return (
     <div 
-      className={`stylish-game-card group cursor-pointer transition-all duration-500 ${isHovered ? 'card-hovered' : ''}`}
+      className={`compact-game-card group cursor-pointer transition-all duration-300 ${isHovered ? 'card-hovered' : ''}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={() => navigate(`/game/${id}`)}
     >
-      <div className="relative w-full h-80 rounded-2xl overflow-hidden shadow-xl group-hover:shadow-2xl transition-all duration-500">
+      <div className="relative w-full h-64 rounded-xl overflow-hidden shadow-lg group-hover:shadow-xl transition-all duration-300">
         
         {/* Background Image */}
         <div className="absolute inset-0">
           <img 
             src={image} 
             alt={title}
-            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          {/* Dark gradient overlay for text readability */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/20" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
         </div>
 
         {/* Top Section - Badges and Wishlist */}
-        <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
-          <div className="flex gap-2">
+        <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10">
+          <div className="flex gap-1">
             {featured && (
-              <Badge className="bg-primary text-white font-bold px-3 py-1 rounded-full shadow-lg backdrop-blur-sm">
+              <Badge className="bg-primary text-white font-medium px-2 py-1 text-xs rounded-md">
                 Featured
               </Badge>
             )}
             {onSale && (
-              <Badge className="bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold px-3 py-1 rounded-full shadow-lg backdrop-blur-sm">
-                -{discountPercentage}% OFF
+              <Badge className="bg-red-500 text-white font-medium px-2 py-1 text-xs rounded-md">
+                -{discountPercentage}%
               </Badge>
             )}
           </div>
@@ -90,48 +89,35 @@ const GameCard = ({
           <Button
             variant="ghost"
             size="sm"
-            className="h-10 w-10 p-0 bg-black/50 hover:bg-black/70 border border-white/30 backdrop-blur-sm rounded-full transition-all duration-300"
+            className="h-7 w-7 p-0 bg-black/40 hover:bg-black/60 rounded-full transition-all duration-200"
             onClick={(e) => {
               e.stopPropagation();
               setIsWishlisted(!isWishlisted);
             }}
           >
             <Heart 
-              className={`h-5 w-5 transition-all duration-300 ${
-                isWishlisted 
-                  ? 'fill-red-500 text-red-500' 
-                  : 'text-white hover:text-red-400'
-              }`} 
+              className={`h-3 w-3 ${isWishlisted ? 'fill-red-500 text-red-500' : 'text-white'}`} 
             />
           </Button>
         </div>
 
-        {/* Center Play Button (appears on hover) */}
-        <div className={`absolute inset-0 flex items-center justify-center transition-all duration-500 ${
-          isHovered ? 'opacity-100' : 'opacity-0'
-        }`}>
-          <div className="bg-black/70 backdrop-blur-sm rounded-full p-4 border border-white/30 hover:scale-110 transition-transform duration-300">
-            <Play className="h-8 w-8 text-white fill-white" />
-          </div>
-        </div>
-
-        {/* Bottom Content */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 z-10">
+        {/* Content */}
+        <div className="absolute bottom-0 left-0 right-0 p-3 z-10">
           
           {/* Title and Developer */}
-          <div className="mb-3">
-            <h3 className="font-bold text-2xl text-white mb-1 line-clamp-1 drop-shadow-lg">
+          <div className="mb-2">
+            <h3 className="font-bold text-lg text-white mb-0.5 line-clamp-1 drop-shadow-md">
               {title}
             </h3>
-            <p className="text-sm text-gray-300 font-medium drop-shadow-md">{developer}</p>
+            <p className="text-xs text-gray-300 drop-shadow-sm">{developer}</p>
           </div>
 
           {/* Tags */}
-          <div className="flex flex-wrap gap-2 mb-4">
-            {tags.slice(0, 3).map((tag, index) => (
+          <div className="flex flex-wrap gap-1 mb-2">
+            {tags.slice(0, 2).map((tag) => (
               <span 
                 key={tag} 
-                className="px-3 py-1 text-xs font-medium bg-white/20 backdrop-blur-sm text-white rounded-full border border-white/30 hover:bg-white/30 transition-all duration-300"
+                className="px-2 py-0.5 text-xs bg-white/20 backdrop-blur-sm text-white rounded-md"
               >
                 {tag}
               </span>
@@ -139,21 +125,21 @@ const GameCard = ({
           </div>
 
           {/* Rating */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex items-center gap-0.5">
               {[...Array(5)].map((_, i) => (
                 <Star 
                   key={i}
-                  className={`h-4 w-4 drop-shadow-sm ${
+                  className={`h-3 w-3 ${
                     i < Math.floor(rating) 
                       ? 'fill-yellow-400 text-yellow-400' 
-                      : 'text-white/40'
+                      : 'text-white/30'
                   }`} 
                 />
               ))}
             </div>
-            <span className="text-lg font-bold text-white drop-shadow-md">{rating}</span>
-            <span className="text-sm text-gray-300 drop-shadow-sm">
+            <span className="text-sm font-bold text-white">{rating}</span>
+            <span className="text-xs text-gray-300">
               ({reviewCount.toLocaleString()})
             </span>
           </div>
@@ -162,33 +148,31 @@ const GameCard = ({
           <div className="flex items-center justify-between">
             <div>
               {originalPrice && originalPrice > price ? (
-                <div className="flex items-center gap-3">
-                  <span className="text-lg line-through text-gray-400 drop-shadow-sm">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm line-through text-gray-400">
                     ${originalPrice}
                   </span>
-                  <span className="text-3xl font-bold text-white drop-shadow-lg">
+                  <span className="text-xl font-bold text-white">
                     ${price}
                   </span>
                 </div>
               ) : (
-                <span className="text-3xl font-bold text-white drop-shadow-lg">
+                <span className="text-xl font-bold text-white">
                   {price === 0 ? 'Free' : `$${price}`}
                 </span>
               )}
             </div>
             
             <Button 
-              className="px-6 py-3 font-bold bg-primary hover:bg-primary/90 text-white shadow-lg hover:shadow-xl border border-white/20 backdrop-blur-sm rounded-xl transition-all duration-300 hover:scale-105"
+              size="sm"
+              className="px-3 py-1.5 text-xs font-medium bg-primary hover:bg-primary/90 text-white rounded-lg transition-all duration-200"
               onClick={handleAddToCart}
             >
-              <ShoppingCart className="h-4 w-4 mr-2" />
+              <ShoppingCart className="h-3 w-3 mr-1" />
               Add to Cart
             </Button>
           </div>
         </div>
-
-        {/* Subtle border glow on hover */}
-        <div className="absolute inset-0 rounded-2xl border-2 border-transparent group-hover:border-primary/50 transition-all duration-500" />
       </div>
     </div>
   );
