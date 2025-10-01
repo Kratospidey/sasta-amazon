@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils";
 
 const Games = () => {
   const { user } = useAuth();
-  const { games, platforms, lists, listItems, addGameToList } = useTracker();
+  const { games, platforms, lists, listItems, addGameToList, createList } = useTracker();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const query = searchParams.get("query") ?? "";
@@ -52,17 +52,20 @@ const Games = () => {
       toast.error("Sign in to organise your library");
       return;
     }
-    const backlog = lists.find((list) => list.userId === user.id && list.name === "Backlog");
-    if (!backlog) {
-      toast.error("Create a backlog list first");
+    const backlog = lists.find(
+      (list) => list.userId === user.id && list.name.toLowerCase() === "backlog",
+    );
+    const backlogId = backlog?.id || createList({ userId: user.id, name: "Backlog" });
+    if (!backlogId) {
+      toast.error("Unable to create a backlog list");
       return;
     }
-    const alreadyTracked = listItems.some((item) => item.gameId === gameId && item.listId === backlog.id);
+    const alreadyTracked = listItems.some((item) => item.gameId === gameId && item.listId === backlogId);
     if (alreadyTracked) {
       toast("This game is already in your backlog");
       return;
     }
-    addGameToList({ listId: backlog.id, gameId, status: "Backlog" });
+    addGameToList({ listId: backlogId, gameId, status: "Backlog" });
     toast.success("Added to backlog");
   };
 
