@@ -18,11 +18,11 @@ export type Game = {
 
 export type Achievement = {
   id: string;
-  gameId: string;
   name: string;
   description: string;
   xp: number;
   rarity: "common" | "uncommon" | "rare" | "legendary";
+  category: "library" | "playtime" | "engagement" | "social";
 };
 
 export type AchievementUnlock = {
@@ -67,6 +67,7 @@ export type ActivityEvent = {
   createdAt: string;
   relatedGameId?: string;
   relatedAchievementId?: string;
+  relatedCategory?: Achievement["category"];
 };
 
 export type TrackerDataSnapshot = {

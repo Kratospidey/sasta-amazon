@@ -12,6 +12,14 @@ import { useTracker } from "@/contexts/TrackerContext";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import type { Achievement } from "@/lib/trackerTypes";
+
+const achievementCategoryLabels: Record<Achievement["category"], string> = {
+  library: "Library milestones",
+  playtime: "Playtime goals",
+  engagement: "Engagement streaks",
+  social: "Social sharing",
+};
 
 const Profile = () => {
   const { user, login, register, logout, updateProfile, loading } = useAuth();
@@ -198,9 +206,14 @@ const Profile = () => {
                         const achievement = achievements.find((candidate) => candidate.id === unlock.achievementId);
                         if (!achievement) return null;
                         return (
-                          <div key={unlock.id} className="flex items-center justify-between gap-3">
+                          <div key={unlock.id} className="flex flex-col gap-1">
                             <span className="font-medium text-foreground">{achievement.name}</span>
-                            <span>{formatDistanceToNow(new Date(unlock.unlockedAt))} ago</span>
+                            <div className="flex items-center justify-between text-xs">
+                              <span className="text-muted-foreground">
+                                {achievementCategoryLabels[achievement.category]}
+                              </span>
+                              <span>{formatDistanceToNow(new Date(unlock.unlockedAt))} ago</span>
+                            </div>
                           </div>
                         );
                       })

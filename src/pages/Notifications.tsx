@@ -8,6 +8,7 @@ import { useTracker } from "@/contexts/TrackerContext";
 import { formatDistanceToNow } from "date-fns";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import type { Achievement } from "@/lib/trackerTypes";
 
 const typeLabels: Record<string, string> = {
   all: "All activity",
@@ -15,6 +16,13 @@ const typeLabels: Record<string, string> = {
   achievement: "Achievements",
   list: "List changes",
   reminder: "Reminders",
+};
+
+const achievementCategoryLabels: Record<Achievement["category"], string> = {
+  library: "Library milestones",
+  playtime: "Playtime goals",
+  engagement: "Engagement streaks",
+  social: "Social sharing",
 };
 
 const Notifications = () => {
@@ -91,6 +99,7 @@ const Notifications = () => {
                   const achievement = event.relatedAchievementId
                     ? achievements.find((candidate) => candidate.id === event.relatedAchievementId)
                     : null;
+                  const categoryLabel = achievement ? achievementCategoryLabels[achievement.category] : null;
                   return (
                     <Card key={event.id}>
                       <CardHeader className="flex flex-col gap-1">
@@ -107,7 +116,12 @@ const Notifications = () => {
                       <CardContent className="flex flex-col gap-2 text-sm text-muted-foreground">
                         <p>{event.description}</p>
                         {game && <p>Game: {game.title}</p>}
-                        {achievement && <p>Achievement: {achievement.name}</p>}
+                        {achievement && (
+                          <p>
+                            Achievement: {achievement.name}
+                            {categoryLabel ? ` • ${categoryLabel}` : ""}
+                          </p>
+                        )}
                       </CardContent>
                     </Card>
                   );

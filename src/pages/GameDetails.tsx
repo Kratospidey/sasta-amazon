@@ -12,18 +12,8 @@ import { format } from "date-fns";
 const GameDetails = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const {
-    games,
-    platforms,
-    achievements,
-    achievementUnlocks,
-    lists,
-    listItems,
-    addGameToList,
-    updateListItem,
-    logPlaySession,
-    unlockAchievement,
-  } = useTracker();
+  const { games, platforms, lists, listItems, addGameToList, updateListItem, logPlaySession, createList } =
+    useTracker();
 
   const game = games.find((candidate) => candidate.id === id);
   if (!game) {
@@ -57,46 +47,61 @@ const GameDetails = () => {
       )
     : [];
   const trackedItem = userListItems[0];
-  const backlog = user ? lists.find((list) => list.userId === user.id && list.name === "Backlog") : null;
-  const playingList = user ? lists.find((list) => list.userId === user.id && list.name === "Playing") : null;
-  const completedList = user ? lists.find((list) => list.userId === user.id && list.name === "Completed") : null;
 
-  const gameAchievements = achievements.filter((achievement) => achievement.gameId === game.id);
-  const userUnlocks = user
-    ? achievementUnlocks.filter((unlock) => unlock.userId === user.id && gameAchievements.some((ach) => ach.id === unlock.achievementId))
-    : [];
+  const getOrCreateListId = (name: string) => {
+    if (!user) return "";
+    const existing = lists.find(
+      (list) => list.userId === user.id && list.name.toLowerCase() === name.toLowerCase(),
+    );
+    return existing?.id || createList({ userId: user.id, name });
+  };
 
   const handleAddToBacklog = () => {
-    if (!user || !backlog) {
+    if (!user) {
       toast.error("Sign in to track this game");
       return;
     }
-    addGameToList({ listId: backlog.id, gameId: game.id, status: "Backlog" });
+    const backlogId = getOrCreateListId("Backlog");
+    if (!backlogId) {
+      toast.error("Unable to create a backlog list");
+      return;
+    }
+    addGameToList({ listId: backlogId, gameId: game.id, status: "Backlog" });
     toast.success("Added to backlog");
   };
 
   const handleStartPlaying = () => {
-    if (!user || !playingList) {
+    if (!user) {
       toast.error("Sign in to move this game to Playing");
       return;
     }
+    const playingListId = getOrCreateListId("Playing");
+    if (!playingListId) {
+      toast.error("Unable to create a playing list");
+      return;
+    }
     if (trackedItem) {
-      updateListItem(trackedItem.id, { listId: playingList.id, status: "Playing" });
+      updateListItem(trackedItem.id, { listId: playingListId, status: "Playing" });
     } else {
-      addGameToList({ listId: playingList.id, gameId: game.id, status: "Playing" });
+      addGameToList({ listId: playingListId, gameId: game.id, status: "Playing" });
     }
     toast.success("Marked as playing");
   };
 
   const handleComplete = () => {
-    if (!user || !completedList) {
+    if (!user) {
       toast.error("Sign in to complete games");
       return;
     }
+    const completedListId = getOrCreateListId("Completed");
+    if (!completedListId) {
+      toast.error("Unable to create a completed list");
+      return;
+    }
     if (trackedItem) {
-      updateListItem(trackedItem.id, { listId: completedList.id, status: "Completed", progress: 1 });
+      updateListItem(trackedItem.id, { listId: completedListId, status: "Completed", progress: 1 });
     } else {
-      addGameToList({ listId: completedList.id, gameId: game.id, status: "Completed" });
+      addGameToList({ listId: completedListId, gameId: game.id, status: "Completed" });
     }
     toast.success("Marked as completed");
   };
@@ -108,15 +113,6 @@ const GameDetails = () => {
     }
     logPlaySession({ userId: user.id, gameId: game.id, minutes: 45 });
     toast.success("Logged 45 minutes");
-  };
-
-  const handleUnlock = (achievementId: string) => {
-    if (!user) {
-      toast.error("Sign in to unlock achievements");
-      return;
-    }
-    unlockAchievement({ userId: user.id, achievementId });
-    toast.success("Achievement recorded");
   };
 
   return (
@@ -201,44 +197,17 @@ const GameDetails = () => {
         <section className="grid gap-4 lg:grid-cols-[2fr,1fr]">
           <Card>
             <CardHeader>
-              <CardTitle>Achievement list</CardTitle>
-              <CardDescription>Track your unlock progress</CardDescription>
+              <CardTitle>Platform achievements</CardTitle>
+              <CardDescription>Milestones apply to your entire GameVault profile.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {gameAchievements.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No achievements defined yet.</p>
-              ) : (
-                gameAchievements.map((achievement) => {
-                  const unlock = userUnlocks.find((candidate) => candidate.achievementId === achievement.id);
-                  return (
-                    <div
-                      key={achievement.id}
-                      className="rounded-md border border-border/60 px-4 py-3 flex flex-col gap-2 text-sm"
-                    >
-                      <div className="flex items-center justify-between gap-4">
-                        <div>
-                          <p className="font-semibold text-foreground">{achievement.name}</p>
-                          <p className="text-muted-foreground">{achievement.description}</p>
-                        </div>
-                        <Badge variant={unlock ? "default" : "outline"}>
-                          {unlock ? "Unlocked" : `${achievement.xp} XP`}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-                        <span className="capitalize">{achievement.rarity} rarity</span>
-                        <span>
-                          {unlock ? `Unlocked on ${format(new Date(unlock.unlockedAt), "PP")}` : "Not unlocked yet"}
-                        </span>
-                      </div>
-                      {!unlock && (
-                        <Button size="sm" variant="ghost" className="self-start" onClick={() => handleUnlock(achievement.id)}>
-                          Mark as unlocked
-                        </Button>
-                      )}
-                    </div>
-                  );
-                })
-              )}
+            <CardContent className="space-y-4 text-sm text-muted-foreground">
+              <p>
+                Achievements are tracked globally across your library. Visit the achievements hub to log unlocks for
+                library, playtime, and social goals.
+              </p>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/achievements">Open achievements hub</Link>
+              </Button>
             </CardContent>
           </Card>
 

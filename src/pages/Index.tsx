@@ -8,6 +8,14 @@ import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
+import type { Achievement } from "@/lib/trackerTypes";
+
+const achievementCategoryLabels: Record<Achievement["category"], string> = {
+  library: "Library milestones",
+  playtime: "Playtime goals",
+  engagement: "Engagement streaks",
+  social: "Social sharing",
+};
 
 const Index = () => {
   const { user } = useAuth();
@@ -69,7 +77,7 @@ const Index = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Achievements unlocked</CardTitle>
-                <CardDescription>Across tracked games</CardDescription>
+                <CardDescription>Across platform milestones</CardDescription>
               </CardHeader>
               <CardContent className="text-3xl font-bold">{unlockedAchievements.length}</CardContent>
             </Card>
@@ -195,6 +203,7 @@ const Index = () => {
                     const achievement = event.relatedAchievementId
                       ? achievements.find((ach) => ach.id === event.relatedAchievementId)
                       : null;
+                    const categoryLabel = achievement ? achievementCategoryLabels[achievement.category] : null;
                     return (
                       <div key={event.id} className="rounded-md border border-border/60 px-3 py-2 text-sm flex flex-col gap-1">
                         <div className="flex items-center justify-between">
@@ -205,7 +214,12 @@ const Index = () => {
                           </Badge>
                         </div>
                         {game && <span className="text-xs text-muted-foreground">{game.title}</span>}
-                        {achievement && <span className="text-xs text-muted-foreground">{achievement.name}</span>}
+                        {achievement && (
+                          <span className="text-xs text-muted-foreground">
+                            {achievement.name}
+                            {categoryLabel ? ` • ${categoryLabel}` : ""}
+                          </span>
+                        )}
                         <span className="text-xs text-muted-foreground">
                           {formatDistanceToNow(new Date(event.createdAt))} ago
                         </span>

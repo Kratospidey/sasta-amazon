@@ -19,6 +19,14 @@ const createId = () =>
     ? crypto.randomUUID()
     : `id-${Math.random().toString(36).slice(2, 11)}`;
 
+const DEFAULT_LIST_CONFIG: Record<string, { name: string; type: List["type"] }> = {
+  backlog: { name: "Backlog", type: "default" },
+  playing: { name: "Playing", type: "default" },
+  completed: { name: "Completed", type: "default" },
+};
+
+const normaliseListName = (value: string) => value.trim().toLowerCase();
+
 export type TrackerContextValue = {
   data: TrackerDataSnapshot;
   games: Game[];
@@ -51,11 +59,19 @@ const loadData = (): TrackerDataSnapshot => {
 
   try {
     const parsed = JSON.parse(raw) as TrackerDataSnapshot;
+    const hasPlatformAchievements = Array.isArray(parsed.achievements)
+      ? parsed.achievements.every((achievement) => "category" in achievement)
+      : false;
+    const achievements = hasPlatformAchievements ? parsed.achievements : defaultTrackerData.achievements;
+    const validAchievementIds = new Set(achievements.map((achievement) => achievement.id));
     return {
       ...defaultTrackerData,
       ...parsed,
       platforms: parsed.platforms?.length ? parsed.platforms : defaultTrackerData.platforms,
       games: parsed.games?.length ? parsed.games : defaultTrackerData.games,
+      achievements,
+      achievementUnlocks: parsed.achievementUnlocks?.filter((unlock) => validAchievementIds.has(unlock.achievementId)) ??
+        defaultTrackerData.achievementUnlocks,
     };
   } catch (error) {
     console.error("Failed to parse tracker data", error);
@@ -88,12 +104,38 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   }, []);
 
   const createList = useCallback<TrackerContextValue["createList"]>(({ userId, name }) => {
-    const id = `list-${createId()}`;
-    updateData((snapshot) => ({
-      ...snapshot,
-      lists: [...snapshot.lists, { id, userId, name, type: "custom" }],
-    }));
-    return id;
+    const trimmed = name.trim();
+    if (!trimmed) {
+      return "";
+    }
+    const normalised = normaliseListName(trimmed);
+    let createdId = "";
+    updateData((snapshot) => {
+      const existing = snapshot.lists.find(
+        (list) => list.userId === userId && normaliseListName(list.name) === normalised,
+      );
+      if (existing) {
+        createdId = existing.id;
+        return snapshot;
+      }
+
+      const baseConfig = DEFAULT_LIST_CONFIG[normalised];
+      const id = `list-${createId()}`;
+      createdId = id;
+      return {
+        ...snapshot,
+        lists: [
+          ...snapshot.lists,
+          {
+            id,
+            userId,
+            name: baseConfig ? baseConfig.name : trimmed,
+            type: baseConfig ? baseConfig.type : "custom",
+          },
+        ],
+      };
+    });
+    return createdId;
   }, [updateData]);
 
   const addGameToList = useCallback<TrackerContextValue["addGameToList"]>(({ listId, gameId, status }) => {
@@ -247,8 +289,8 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
             title: `Unlocked ${achievement?.name ?? "an achievement"}`,
             description: achievement?.description ?? "Achievement unlocked",
             createdAt: now,
-            relatedGameId: achievement?.gameId,
             relatedAchievementId: achievementId,
+            relatedCategory: achievement?.category,
           },
           ...snapshot.activity,
         ].slice(0, 40),
