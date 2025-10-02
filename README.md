@@ -36,6 +36,50 @@ npm i
 npm run dev
 ```
 
+## Connecting Supabase & OpenAuth
+
+This project now persists data in Supabase and delegates authentication to [Supabase OpenAuth](https://supabase.com/docs/guides/openauth).
+
+1. Copy `.env.example` to `.env.local` (or `.env`) and provide the credentials for your Supabase project:
+
+   ```sh
+   cp .env.example .env.local
+   ```
+
+   | Variable | Description |
+   | --- | --- |
+   | `VITE_SUPABASE_URL` | Supabase project URL |
+   | `VITE_SUPABASE_ANON_KEY` | Anonymous API key |
+   | `VITE_OPENAUTH_ISSUER` | OpenAuth issuer URL from the Supabase dashboard |
+   | `VITE_OPENAUTH_CLIENT_ID` | The client ID created for this web application |
+   | `VITE_OPENAUTH_REDIRECT_URI` | (Optional) override for the callback route, defaults to `/auth/callback` |
+
+2. In Supabase, create the tables used by the app:
+
+   ```sql
+   -- Stores profile metadata for authenticated users
+   create table if not exists public.profiles (
+     id text primary key,
+     email text,
+     display_name text,
+     avatar_color text,
+     bio text,
+     privacy text default 'friends',
+     updated_at timestamptz default now()
+   );
+
+   -- Stores the full tracker snapshot per user
+   create table if not exists public.tracker_snapshots (
+     user_id text primary key references public.profiles(id) on delete cascade,
+     snapshot jsonb not null,
+     updated_at timestamptz default now()
+   );
+   ```
+
+3. Enable OpenAuth in Supabase and configure at least one provider (email, Google, GitHub, etc.). Use the callback URL `http://localhost:5173/auth/callback` (or the URL defined in `VITE_OPENAUTH_REDIRECT_URI`).
+
+Once the environment variables are set the app will automatically use Supabase for persistence; without them it falls back to the local demo mode.
+
 **Edit a file directly in GitHub**
 
 - Navigate to the desired file(s).
