@@ -1,4 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 import {
   ActivityEvent,
   Achievement,
@@ -13,6 +15,8 @@ import {
 import { defaultTrackerData } from "@/lib/seeds";
 
 const STORAGE_KEY = "gamevault-tracker-data";
+
+const isBrowser = typeof window !== "undefined";
 
 const createId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -50,58 +54,132 @@ export type TrackerContextValue = {
 
 const TrackerContext = createContext<TrackerContextValue | undefined>(undefined);
 
-const loadData = (): TrackerDataSnapshot => {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultTrackerData));
+const normaliseSnapshot = (snapshot?: Partial<TrackerDataSnapshot> | null): TrackerDataSnapshot => {
+  if (!snapshot) {
     return defaultTrackerData;
   }
+  const hasPlatformAchievements = Array.isArray(snapshot.achievements)
+    ? snapshot.achievements.every((achievement) => "category" in achievement)
+    : false;
+  const achievements = hasPlatformAchievements ? snapshot.achievements : defaultTrackerData.achievements;
+  const validAchievementIds = new Set(achievements.map((achievement) => achievement.id));
 
+  return {
+    ...defaultTrackerData,
+    ...snapshot,
+    platforms: snapshot.platforms?.length ? snapshot.platforms : defaultTrackerData.platforms,
+    games: snapshot.games?.length ? snapshot.games : defaultTrackerData.games,
+    achievements,
+    achievementUnlocks:
+      snapshot.achievementUnlocks?.filter((unlock) => validAchievementIds.has(unlock.achievementId)) ??
+      defaultTrackerData.achievementUnlocks,
+  };
+};
+
+const readLocalData = (): TrackerDataSnapshot => {
+  if (!isBrowser) {
+    return defaultTrackerData;
+  }
+  const raw = window.localStorage.getItem(STORAGE_KEY);
+  if (!raw) {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultTrackerData));
+    return defaultTrackerData;
+  }
   try {
     const parsed = JSON.parse(raw) as TrackerDataSnapshot;
-    const hasPlatformAchievements = Array.isArray(parsed.achievements)
-      ? parsed.achievements.every((achievement) => "category" in achievement)
-      : false;
-    const achievements = hasPlatformAchievements ? parsed.achievements : defaultTrackerData.achievements;
-    const validAchievementIds = new Set(achievements.map((achievement) => achievement.id));
-    return {
-      ...defaultTrackerData,
-      ...parsed,
-      platforms: parsed.platforms?.length ? parsed.platforms : defaultTrackerData.platforms,
-      games: parsed.games?.length ? parsed.games : defaultTrackerData.games,
-      achievements,
-      achievementUnlocks: parsed.achievementUnlocks?.filter((unlock) => validAchievementIds.has(unlock.achievementId)) ??
-        defaultTrackerData.achievementUnlocks,
-    };
+    return normaliseSnapshot(parsed);
   } catch (error) {
     console.error("Failed to parse tracker data", error);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultTrackerData));
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultTrackerData));
     return defaultTrackerData;
   }
 };
 
-const persistData = (data: TrackerDataSnapshot) => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+const persistLocalData = (data: TrackerDataSnapshot) => {
+  if (!isBrowser) return;
+  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+};
+
+const upsertRemoteSnapshot = async (userId: string, snapshot: TrackerDataSnapshot) => {
+  if (!supabase) return;
+  const { error } = await supabase
+    .from("tracker_snapshots")
+    .upsert(
+      {
+        user_id: userId,
+        snapshot,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id" },
+    );
+  if (error) {
+    throw error;
+  }
+};
+
+const fetchRemoteSnapshot = async (userId: string): Promise<TrackerDataSnapshot> => {
+  if (!supabase) {
+    return defaultTrackerData;
+  }
+  const { data, error } = await supabase
+    .from("tracker_snapshots")
+    .select("snapshot")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error && error.code !== "PGRST116") {
+    throw error;
+  }
+
+  if (!data?.snapshot) {
+    await upsertRemoteSnapshot(userId, defaultTrackerData);
+    return defaultTrackerData;
+  }
+
+  return normaliseSnapshot(data.snapshot as TrackerDataSnapshot);
 };
 
 export const TrackerProvider = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
   const [data, setData] = useState<TrackerDataSnapshot>(defaultTrackerData);
 
-  useEffect(() => {
-    setData(loadData());
-  }, []);
-
-  const updateData = useCallback((updater: (snapshot: TrackerDataSnapshot) => TrackerDataSnapshot) => {
-    setData((prev) => {
-      const next = updater(prev);
-      persistData(next);
-      return next;
-    });
-  }, []);
+  const shouldUseRemote = Boolean(isSupabaseConfigured && supabase && user);
 
   const refresh = useCallback(() => {
-    setData(loadData());
-  }, []);
+    if (shouldUseRemote && user) {
+      void fetchRemoteSnapshot(user.id)
+        .then((snapshot) => {
+          setData(snapshot);
+        })
+        .catch((error) => {
+          console.error("Failed to fetch tracker snapshot", error);
+          setData(defaultTrackerData);
+        });
+    } else {
+      setData(readLocalData());
+    }
+  }, [shouldUseRemote, user]);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const updateData = useCallback(
+    (updater: (snapshot: TrackerDataSnapshot) => TrackerDataSnapshot) => {
+      setData((prev) => {
+        const next = updater(prev);
+        if (shouldUseRemote && user) {
+          void upsertRemoteSnapshot(user.id, next).catch((error) => {
+            console.error("Failed to persist tracker snapshot", error);
+          });
+        } else {
+          persistLocalData(next);
+        }
+        return next;
+      });
+    },
+    [shouldUseRemote, user],
+  );
 
   const createList = useCallback<TrackerContextValue["createList"]>(({ userId, name }) => {
     const trimmed = name.trim();
@@ -211,7 +289,10 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           id: `activity-${createId()}`,
           userId: snapshot.lists.find((list) => list.id === targetListId)?.userId ?? "",
           type: "list",
-          title: `Moved ${snapshot.games.find((g) => g.id === snapshot.listItems.find((li) => li.id === itemId)?.gameId)?.title ?? "a game"}`,
+          title: `Moved ${
+            snapshot.games.find((g) => g.id === snapshot.listItems.find((li) => li.id === itemId)?.gameId)?.title ??
+            "a game"
+          }`,
           description: "List organisation updated.",
           createdAt: new Date().toISOString(),
           relatedGameId: snapshot.listItems.find((li) => li.id === itemId)?.gameId,
@@ -224,7 +305,9 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
   const logPlaySession = useCallback<TrackerContextValue["logPlaySession"]>(({ userId, gameId, minutes }) => {
     const now = new Date().toISOString();
     updateData((snapshot) => {
-      const item = snapshot.listItems.find((li) => li.gameId === gameId && snapshot.lists.find((l) => l.id === li.listId)?.userId === userId);
+      const item = snapshot.listItems.find(
+        (li) => li.gameId === gameId && snapshot.lists.find((l) => l.id === li.listId)?.userId === userId,
+      );
       return {
         ...snapshot,
         listItems: snapshot.listItems.map((li) =>
@@ -232,7 +315,11 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
             ? {
                 ...li,
                 playtimeMinutes: li.playtimeMinutes + minutes,
-                progress: Math.min(1, li.progress + minutes / (snapshot.games.find((g) => g.id === gameId)?.averagePlaytime || 600)),
+                progress: Math.min(
+                  1,
+                  li.progress +
+                    minutes / (snapshot.games.find((g) => g.id === gameId)?.averagePlaytime || 600),
+                ),
                 lastPlayedAt: now,
               }
             : li,
@@ -252,7 +339,9 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
             id: `activity-${createId()}`,
             userId,
             type: "play",
-            title: `Logged ${minutes} minutes in ${snapshot.games.find((g) => g.id === gameId)?.title ?? "a game"}`,
+            title: `Logged ${minutes} minutes in ${
+              snapshot.games.find((g) => g.id === gameId)?.title ?? "a game"
+            }`,
             description: "Play session recorded.",
             createdAt: now,
             relatedGameId: gameId,
@@ -313,26 +402,40 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     }));
   }, [updateData]);
 
-  const value = useMemo<TrackerContextValue>(() => ({
-    data,
-    games: data.games,
-    platforms: data.platforms,
-    achievements: data.achievements,
-    lists: data.lists,
-    listItems: data.listItems,
-    achievementUnlocks: data.achievementUnlocks,
-    activity: data.activity,
-    playSessions: data.playSessions,
-    refresh,
-    createList,
-    addGameToList,
-    updateListItem,
-    moveToList,
-    logPlaySession,
-    unlockAchievement,
-    recordActivity,
-    deleteList,
-  }), [data, refresh, createList, addGameToList, updateListItem, moveToList, logPlaySession, unlockAchievement, recordActivity, deleteList]);
+  const value = useMemo<TrackerContextValue>(
+    () => ({
+      data,
+      games: data.games,
+      platforms: data.platforms,
+      achievements: data.achievements,
+      lists: data.lists,
+      listItems: data.listItems,
+      achievementUnlocks: data.achievementUnlocks,
+      activity: data.activity,
+      playSessions: data.playSessions,
+      refresh,
+      createList,
+      addGameToList,
+      updateListItem,
+      moveToList,
+      logPlaySession,
+      unlockAchievement,
+      recordActivity,
+      deleteList,
+    }),
+    [
+      data,
+      refresh,
+      createList,
+      addGameToList,
+      updateListItem,
+      moveToList,
+      logPlaySession,
+      unlockAchievement,
+      recordActivity,
+      deleteList,
+    ],
+  );
 
   return <TrackerContext.Provider value={value}>{children}</TrackerContext.Provider>;
 };

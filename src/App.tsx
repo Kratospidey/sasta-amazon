@@ -13,6 +13,7 @@ import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import Games from "./pages/Games";
 import Achievements from "./pages/Achievements";
+import AuthCallback from "./pages/AuthCallback";
 import { AuthProvider } from "./contexts/AuthContext";
 import { TrackerProvider } from "./contexts/TrackerContext";
 
@@ -36,6 +37,7 @@ const App = () => (
                 <Route path="/activity" element={<Activity />} />
                 <Route path="/support" element={<Support />} />
                 <Route path="/profile" element={<Profile />} />
+                <Route path="/auth/callback" element={<AuthCallback />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>

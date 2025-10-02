@@ -5,14 +5,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTracker } from "@/contexts/TrackerContext";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import type { Achievement } from "@/lib/trackerTypes";
+import { Loader2 } from "lucide-react";
 
 const achievementCategoryLabels: Record<Achievement["category"], string> = {
   library: "Library milestones",
@@ -22,7 +23,7 @@ const achievementCategoryLabels: Record<Achievement["category"], string> = {
 };
 
 const Profile = () => {
-  const { user, login, register, logout, updateProfile, loading } = useAuth();
+  const { user, login, register, logout, updateProfile, loading, beginLogin, usingOpenAuth } = useAuth();
   const { lists, listItems, achievements, achievementUnlocks, activity } = useTracker();
   const [formState, setFormState] = useState({
     displayName: user?.displayName ?? "",
@@ -32,6 +33,8 @@ const Profile = () => {
   const [loginState, setLoginState] = useState({ email: "demo@gamevault.dev", password: "demo" });
   const [registerState, setRegisterState] = useState({ email: "", password: "", displayName: "" });
   const [isSaving, setIsSaving] = useState(false);
+  const [providerHint, setProviderHint] = useState("");
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const userLists = user ? lists.filter((list) => list.userId === user.id) : [];
   const userItems = user
@@ -44,6 +47,7 @@ const Profile = () => {
   const recentActivity = user
     ? activity.filter((event) => event.userId === user.id).slice(0, 4)
     : [];
+
 
   const handleLogin = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -62,6 +66,16 @@ const Profile = () => {
       toast.success("Account created");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to register");
+    }
+  };
+
+  const handleOpenAuthLogin = async () => {
+    setIsRedirecting(true);
+    try {
+      await beginLogin({ provider: providerHint.trim() || undefined });
+    } catch (error) {
+      setIsRedirecting(false);
+      toast.error(error instanceof Error ? error.message : "Unable to start OpenAuth sign-in");
     }
   };
 
@@ -89,65 +103,99 @@ const Profile = () => {
           <Card>
             <CardHeader>
               <CardTitle>Access your tracker</CardTitle>
-              <CardDescription>Sign in with the demo account or create a new profile.</CardDescription>
+              <CardDescription>
+                {usingOpenAuth
+                  ? "Securely sign in with your Supabase OpenAuth provider."
+                  : "Sign in with the demo account or create a new profile."}
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="login">Login</TabsTrigger>
-                  <TabsTrigger value="register">Register</TabsTrigger>
-                </TabsList>
-                <TabsContent value="login" className="space-y-4 pt-4">
-                  <form onSubmit={handleLogin} className="space-y-3">
-                    <Input
-                      type="email"
-                      value={loginState.email}
-                      onChange={(event) => setLoginState((prev) => ({ ...prev, email: event.target.value }))}
-                      placeholder="Email"
-                      required
-                    />
-                    <Input
-                      type="password"
-                      value={loginState.password}
-                      onChange={(event) => setLoginState((prev) => ({ ...prev, password: event.target.value }))}
-                      placeholder="Password"
-                      required
-                    />
-                    <Button type="submit" className="w-full">
-                      Sign in
-                    </Button>
-                  </form>
-                </TabsContent>
-                <TabsContent value="register" className="space-y-4 pt-4">
-                  <form onSubmit={handleRegister} className="space-y-3">
-                    <Input
-                      value={registerState.displayName}
-                      onChange={(event) =>
-                        setRegisterState((prev) => ({ ...prev, displayName: event.target.value }))
-                      }
-                      placeholder="Display name"
-                      required
-                    />
-                    <Input
-                      type="email"
-                      value={registerState.email}
-                      onChange={(event) => setRegisterState((prev) => ({ ...prev, email: event.target.value }))}
-                      placeholder="Email"
-                      required
-                    />
-                    <Input
-                      type="password"
-                      value={registerState.password}
-                      onChange={(event) => setRegisterState((prev) => ({ ...prev, password: event.target.value }))}
-                      placeholder="Password"
-                      required
-                    />
-                    <Button type="submit" className="w-full">
-                      Create account
-                    </Button>
-                  </form>
-                </TabsContent>
-              </Tabs>
+              {usingOpenAuth ? (
+                <div className="space-y-4">
+                  <p className="text-sm text-muted-foreground">
+                    You will be redirected to complete authentication. Configure your providers in Supabase and
+                    optionally specify one below.
+                  </p>
+                  <Input
+                    value={providerHint}
+                    onChange={(event) => setProviderHint(event.target.value)}
+                    placeholder="Optional provider (e.g. google, github)"
+                    disabled={isRedirecting}
+                  />
+                  <Button
+                    type="button"
+                    className="w-full"
+                    onClick={handleOpenAuthLogin}
+                    disabled={isRedirecting}
+                  >
+                    {isRedirecting ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        Redirecting...
+                      </span>
+                    ) : (
+                      "Continue with OpenAuth"
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <Tabs defaultValue="login" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="login">Login</TabsTrigger>
+                    <TabsTrigger value="register">Register</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="login" className="space-y-4 pt-4">
+                    <form onSubmit={handleLogin} className="space-y-3">
+                      <Input
+                        type="email"
+                        value={loginState.email}
+                        onChange={(event) => setLoginState((prev) => ({ ...prev, email: event.target.value }))}
+                        placeholder="Email"
+                        required
+                      />
+                      <Input
+                        type="password"
+                        value={loginState.password}
+                        onChange={(event) => setLoginState((prev) => ({ ...prev, password: event.target.value }))}
+                        placeholder="Password"
+                        required
+                      />
+                      <Button type="submit" className="w-full">
+                        Sign in
+                      </Button>
+                    </form>
+                  </TabsContent>
+                  <TabsContent value="register" className="space-y-4 pt-4">
+                    <form onSubmit={handleRegister} className="space-y-3">
+                      <Input
+                        value={registerState.displayName}
+                        onChange={(event) =>
+                          setRegisterState((prev) => ({ ...prev, displayName: event.target.value }))
+                        }
+                        placeholder="Display name"
+                        required
+                      />
+                      <Input
+                        type="email"
+                        value={registerState.email}
+                        onChange={(event) => setRegisterState((prev) => ({ ...prev, email: event.target.value }))}
+                        placeholder="Email"
+                        required
+                      />
+                      <Input
+                        type="password"
+                        value={registerState.password}
+                        onChange={(event) => setRegisterState((prev) => ({ ...prev, password: event.target.value }))}
+                        placeholder="Password"
+                        required
+                      />
+                      <Button type="submit" className="w-full">
+                        Create account
+                      </Button>
+                    </form>
+                  </TabsContent>
+                </Tabs>
+              )}
             </CardContent>
           </Card>
         ) : (
