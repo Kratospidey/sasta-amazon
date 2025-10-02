@@ -23,7 +23,7 @@ const achievementCategoryLabels: Record<Achievement["category"], string> = {
 };
 
 const Profile = () => {
-  const { user, login, register, logout, updateProfile, loading, beginLogin, usingOpenAuth } = useAuth();
+  const { user, login, register, logout, updateProfile, loading, beginLogin, usingAuthelia } = useAuth();
   const { lists, listItems, achievements, achievementUnlocks, activity } = useTracker();
   const [formState, setFormState] = useState({
     displayName: user?.displayName ?? "",
@@ -33,7 +33,6 @@ const Profile = () => {
   const [loginState, setLoginState] = useState({ email: "demo@gamevault.dev", password: "demo" });
   const [registerState, setRegisterState] = useState({ email: "", password: "", displayName: "" });
   const [isSaving, setIsSaving] = useState(false);
-  const [providerHint, setProviderHint] = useState("");
   const [isRedirecting, setIsRedirecting] = useState(false);
 
   const userLists = user ? lists.filter((list) => list.userId === user.id) : [];
@@ -69,13 +68,13 @@ const Profile = () => {
     }
   };
 
-  const handleOpenAuthLogin = async () => {
+  const handleAutheliaLogin = async () => {
     setIsRedirecting(true);
     try {
-      await beginLogin({ provider: providerHint.trim() || undefined });
+      await beginLogin();
     } catch (error) {
       setIsRedirecting(false);
-      toast.error(error instanceof Error ? error.message : "Unable to start OpenAuth sign-in");
+      toast.error(error instanceof Error ? error.message : "Unable to start Authelia sign-in");
     }
   };
 
@@ -104,28 +103,23 @@ const Profile = () => {
             <CardHeader>
               <CardTitle>Access your tracker</CardTitle>
               <CardDescription>
-                {usingOpenAuth
-                  ? "Securely sign in with your Supabase OpenAuth provider."
+                {usingAuthelia
+                  ? "Securely sign in with your Authelia identity provider."
                   : "Sign in with the demo account or create a new profile."}
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {usingOpenAuth ? (
+              {usingAuthelia ? (
                 <div className="space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    You will be redirected to complete authentication. Configure your providers in Supabase and
-                    optionally specify one below.
+                    You will be redirected to Authelia to complete authentication. Ensure your Authelia deployment
+                    exposes the OIDC endpoints over HTTPS and that this application is registered with the correct
+                    callback URL.
                   </p>
-                  <Input
-                    value={providerHint}
-                    onChange={(event) => setProviderHint(event.target.value)}
-                    placeholder="Optional provider (e.g. google, github)"
-                    disabled={isRedirecting}
-                  />
                   <Button
                     type="button"
                     className="w-full"
-                    onClick={handleOpenAuthLogin}
+                    onClick={handleAutheliaLogin}
                     disabled={isRedirecting}
                   >
                     {isRedirecting ? (
@@ -134,7 +128,7 @@ const Profile = () => {
                         Redirecting...
                       </span>
                     ) : (
-                      "Continue with OpenAuth"
+                      "Continue with Authelia"
                     )}
                   </Button>
                 </div>
