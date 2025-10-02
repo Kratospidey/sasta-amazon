@@ -6,7 +6,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { openAuthClient, isOpenAuthConfigured } from "@/lib/openauthClient";
+import { autheliaClient, isAutheliaConfigured } from "@/lib/autheliaClient";
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
 
 export type AuthUser = {
@@ -29,9 +29,9 @@ export type AuthContextValue = {
   updateProfile: (
     updates: Partial<Omit<AuthUser, "id" | "email" | "password">> & { password?: string },
   ) => Promise<void>;
-  beginLogin: (options?: { provider?: string; redirectTo?: string }) => Promise<void>;
+  beginLogin: (options?: { redirectTo?: string }) => Promise<void>;
   completeLogin: (params: URLSearchParams) => Promise<void>;
-  usingOpenAuth: boolean;
+  usingAuthelia: boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -46,14 +46,15 @@ const defaultUser: AuthUser = {
   privacy: "public",
 };
 
-const TOKENS_KEY = "gamevault-openauth-session";
-const CHALLENGE_KEY = "gamevault-openauth-challenge";
+const TOKENS_KEY = "gamevault-authelia-session";
+const CHALLENGE_KEY = "gamevault-authelia-challenge";
 
 const isBrowser = typeof window !== "undefined";
 
 type StoredTokens = {
   access: string;
   refresh: string;
+  idToken?: string;
   expiresAt: number;
 };
 
@@ -64,8 +65,9 @@ type TokenPayload = {
   picture?: string;
 };
 
-const decodeToken = (token: string): TokenPayload | null => {
+const decodeToken = (token?: string): TokenPayload | null => {
   try {
+    if (!token) return null;
     const [, payload] = token.split(".");
     if (!payload) return null;
     const normalised = payload.replace(/-/g, "+").replace(/_/g, "/");
@@ -128,7 +130,7 @@ const clearChallenge = () => {
 const getDefaultRedirectURI = () => {
   if (!isBrowser) return "";
   return (
-    (import.meta.env.VITE_OPENAUTH_REDIRECT_URI as string | undefined) ??
+    (import.meta.env.VITE_AUTHELIA_REDIRECT_URI as string | undefined) ??
     `${window.location.origin}/auth/callback`
   );
 };
@@ -160,13 +162,13 @@ const RemoteAuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
         return;
       }
-      if (!supabase || !openAuthClient) {
+      if (!supabase || !autheliaClient) {
         setUser(null);
         return;
       }
-      const payload = decodeToken(session.access);
+      const payload = decodeToken(session.idToken ?? session.access);
       if (!payload?.sub) {
-        console.warn("Missing subject in OpenAuth token");
+        console.warn("Missing subject in Authelia token");
         setUser(null);
         return;
       }
@@ -215,7 +217,7 @@ const RemoteAuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUser(null);
       }
     },
-    [supabase, openAuthClient],
+    [supabase, autheliaClient],
   );
 
   useEffect(() => {
@@ -243,24 +245,20 @@ const RemoteAuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    if (!tokens || !openAuthClient || !isBrowser) return;
+    if (!tokens || !autheliaClient || !isBrowser) return;
     const timeout = window.setTimeout(async () => {
       try {
-        const refreshed = await openAuthClient.refresh(tokens.refresh, { access: tokens.access });
-        if (refreshed.err) {
-          throw refreshed.err;
-        }
-        if (refreshed.tokens) {
-          const next: StoredTokens = {
-            access: refreshed.tokens.access,
-            refresh: refreshed.tokens.refresh,
-            expiresAt: Date.now() + refreshed.tokens.expiresIn * 1000,
-          };
-          setTokens(next);
-          persistTokens(next);
-        }
+        const refreshed = await autheliaClient.refresh(tokens.refresh);
+        const next: StoredTokens = {
+          access: refreshed.access,
+          refresh: refreshed.refresh,
+          idToken: refreshed.idToken ?? tokens.idToken,
+          expiresAt: Date.now() + refreshed.expiresIn * 1000,
+        };
+        setTokens(next);
+        persistTokens(next);
       } catch (error) {
-        console.error("Failed to refresh OpenAuth session", error);
+        console.error("Failed to refresh Authelia session", error);
         await logout();
       }
     }, Math.max(tokens.expiresAt - Date.now() - 60_000, 5_000));
@@ -273,22 +271,19 @@ const RemoteAuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [tokens]);
 
   const beginLogin = useCallback<AuthContextValue["beginLogin"]>(async (options) => {
-    if (!openAuthClient) {
-      throw new Error("OpenAuth client is not configured");
+    if (!autheliaClient) {
+      throw new Error("Authelia client is not configured");
     }
     if (!isBrowser) return;
     const redirectURI = options?.redirectTo ?? getDefaultRedirectURI();
-    const { challenge, url } = await openAuthClient.authorize(redirectURI, "code", {
-      pkce: true,
-      provider: options?.provider,
-    });
+    const { challenge, url } = await autheliaClient.authorize(redirectURI);
     storeChallenge({ ...challenge, redirectURI });
     window.location.href = url;
-  }, [openAuthClient]);
+  }, [autheliaClient]);
 
   const completeLogin = useCallback<AuthContextValue["completeLogin"]>(async (params) => {
-    if (!openAuthClient) {
-      throw new Error("OpenAuth client is not configured");
+    if (!autheliaClient) {
+      throw new Error("Authelia client is not configured");
     }
     const code = params.get("code");
     const state = params.get("state");
@@ -303,19 +298,17 @@ const RemoteAuthProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error("Authorization state mismatch");
     }
     const redirectURI = stored.redirectURI ?? getDefaultRedirectURI();
-    const exchanged = await openAuthClient.exchange(code, redirectURI, stored.verifier);
-    if (exchanged.err) {
-      throw exchanged.err;
-    }
+    const exchanged = await autheliaClient.exchange(code, redirectURI, stored.verifier);
     const session: StoredTokens = {
-      access: exchanged.tokens.access,
-      refresh: exchanged.tokens.refresh,
-      expiresAt: Date.now() + exchanged.tokens.expiresIn * 1000,
+      access: exchanged.access,
+      refresh: exchanged.refresh,
+      idToken: exchanged.idToken,
+      expiresAt: Date.now() + exchanged.expiresIn * 1000,
     };
     clearChallenge();
     setTokens(session);
     persistTokens(session);
-  }, [openAuthClient]);
+  }, [autheliaClient]);
 
   const login = useCallback<AuthContextValue["login"]>(async () => {
     await beginLogin();
@@ -362,7 +355,7 @@ const RemoteAuthProvider = ({ children }: { children: React.ReactNode }) => {
       updateProfile,
       beginLogin,
       completeLogin,
-      usingOpenAuth: true,
+      usingAuthelia: true,
     }),
     [user, loading, login, register, logout, updateProfile, beginLogin, completeLogin],
   );
@@ -517,7 +510,7 @@ const LocalAuthProvider = ({ children }: LocalAuthProviderProps) => {
       updateProfile,
       beginLogin,
       completeLogin,
-      usingOpenAuth: false,
+      usingAuthelia: false,
     }),
     [user, loading, users, login, register, logout, updateProfile, beginLogin, completeLogin],
   );
@@ -526,7 +519,7 @@ const LocalAuthProvider = ({ children }: LocalAuthProviderProps) => {
 };
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  if (isSupabaseConfigured && isOpenAuthConfigured) {
+  if (isSupabaseConfigured && isAutheliaConfigured) {
     return <RemoteAuthProvider>{children}</RemoteAuthProvider>;
   }
   return <LocalAuthProvider>{children}</LocalAuthProvider>;

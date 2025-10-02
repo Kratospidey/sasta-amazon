@@ -36,11 +36,11 @@ npm i
 npm run dev
 ```
 
-## Connecting Supabase & OpenAuth
+## Connecting Supabase & Authelia
 
-This project now persists data in Supabase and delegates authentication to [Supabase OpenAuth](https://supabase.com/docs/guides/openauth).
+This project now persists data in Supabase and delegates authentication to [Authelia](https://www.authelia.com/) via its OpenID Connect provider. Authelia must be served over HTTPS and your reverse proxy has to forward the headers required by Authelia before the application will accept authenticated sessions.
 
-1. Copy `.env.example` to `.env.local` (or `.env`) and provide the credentials for your Supabase project:
+1. Copy `.env.example` to `.env.local` (or `.env`) and provide the credentials for your Supabase project and Authelia deployment. The example file is pre-populated with the Supabase project shared for this app:
 
    ```sh
    cp .env.example .env.local
@@ -50,33 +50,27 @@ This project now persists data in Supabase and delegates authentication to [Supa
    | --- | --- |
    | `VITE_SUPABASE_URL` | Supabase project URL |
    | `VITE_SUPABASE_ANON_KEY` | Anonymous API key |
-   | `VITE_OPENAUTH_ISSUER` | OpenAuth issuer URL from the Supabase dashboard |
-   | `VITE_OPENAUTH_CLIENT_ID` | The client ID created for this web application |
-   | `VITE_OPENAUTH_REDIRECT_URI` | (Optional) override for the callback route, defaults to `/auth/callback` |
+   | `VITE_AUTHELIA_ISSUER` | Base URL of your Authelia OIDC issuer (e.g. `https://auth.example.com`) |
+   | `VITE_AUTHELIA_CLIENT_ID` | OIDC client ID registered in Authelia for this SPA |
+   | `VITE_AUTHELIA_REDIRECT_URI` | (Optional) override for the callback route, defaults to `/auth/callback` |
+   | `VITE_AUTHELIA_SCOPE` | (Optional) scopes requested from Authelia, defaults to `openid profile email` |
 
-2. In Supabase, create the tables used by the app:
+2. Apply the database schema using the Supabase CLI so the `profiles` and `tracker_snapshots` tables are created. The repository already contains a migration in `supabase/migrations`:
 
-   ```sql
-   -- Stores profile metadata for authenticated users
-   create table if not exists public.profiles (
-     id text primary key,
-     email text,
-     display_name text,
-     avatar_color text,
-     bio text,
-     privacy text default 'friends',
-     updated_at timestamptz default now()
-   );
+   ```sh
+   # Ensure dependencies are installed
+   npm install
 
-   -- Stores the full tracker snapshot per user
-   create table if not exists public.tracker_snapshots (
-     user_id text primary key references public.profiles(id) on delete cascade,
-     snapshot jsonb not null,
-     updated_at timestamptz default now()
-   );
+   # Create or update the local Supabase containers
+   npx supabase start
+
+   # Apply the migrations defined in supabase/migrations
+   npx supabase db reset
    ```
 
-3. Enable OpenAuth in Supabase and configure at least one provider (email, Google, GitHub, etc.). Use the callback URL `http://localhost:5173/auth/callback` (or the URL defined in `VITE_OPENAUTH_REDIRECT_URI`).
+   Running against a remote project? Set your database connection with `npx supabase link` and then run `npx supabase db push`.
+
+3. Configure an OAuth 2.0 client in Authelia that matches the redirect URI above. When users click “Continue with Authelia” they’ll be redirected to Authelia for login and then returned to `/auth/callback`.
 
 Once the environment variables are set the app will automatically use Supabase for persistence; without them it falls back to the local demo mode.
 

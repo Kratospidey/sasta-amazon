@@ -1,0 +1,1 @@
+-- Seed data for GameVault. Intentionally left blank so deployments can provide their own fixtures.
