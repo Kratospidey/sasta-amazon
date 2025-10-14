@@ -8,7 +8,10 @@
     "build": "vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "dev:db:reset": "supabase db reset --env-file .env.local",
+    "dev:db:push": "supabase db push",
+    "deploy:functions": "supabase functions deploy checkout/create checkout/webhook catalog/admin storage/sign-url"
   },
   "dependencies": {
     "@fontsource/inter": "^5.2.8",

@@ -1,0 +1,68 @@
+openapi: 3.1.0
+info:
+  title: Catalog Admin Function
+  version: 1.0.0
+paths:
+  /catalog/admin:
+    post:
+      summary: Perform administrative catalog mutations
+      operationId: catalogAdmin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [entity, operation]
+              properties:
+                entity:
+                  type: string
+                  enum: [game, publisher, platform, category]
+                operation:
+                  type: string
+                  enum: [list, create, update, delete]
+                id:
+                  type: string
+                  format: uuid
+                data:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '200':
+          description: Operation executed
+          content:
+            application/json:
+              schema:
+                type: object
+        '4XX':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+          required: [code, message]
