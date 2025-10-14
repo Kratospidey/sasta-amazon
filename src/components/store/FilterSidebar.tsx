@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useFilters } from "@/contexts/FilterContext";
+import { type FilterState, useFilters } from "@/contexts/FilterContext";
 import { 
   Collapsible,
   CollapsibleContent,
@@ -73,7 +73,10 @@ const FilterSidebar = () => {
             <Grid3X3 className="h-4 w-4 text-primary" />
             <Label className="text-sm font-semibold text-foreground">Sort By</Label>
           </div>
-          <Select value={filters.sortBy} onValueChange={(value: any) => setSortBy(value)}>
+          <Select
+            value={filters.sortBy}
+            onValueChange={(value: FilterState["sortBy"]) => setSortBy(value)}
+          >
             <SelectTrigger className="bg-muted/50 border-white/20 hover:bg-muted/70 transition-colors">
               <SelectValue />
             </SelectTrigger>
