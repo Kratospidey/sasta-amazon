@@ -1,111 +1,165 @@
-# Welcome to your Lovable project
+# Sasta Amazon
 
-## Project info
+This repository now bundles a Supabase-backed ecommerce backend for the game marketplace SPA. The frontend remains a Vite + React + TypeScript single page application using shadcn-ui and Tailwind CSS. All privileged logic runs either inside PostgreSQL (via SQL migrations and Row Level Security) or Supabase Edge Functions so the browser never handles secrets.
 
-**URL**: https://lovable.dev/projects/456ffb1c-c238-4c26-a1e8-3f87adad4ad5
+## Tech stack
 
-## How can I edit this code?
+- **Frontend** – Vite SPA (React, TypeScript, shadcn-ui, Tailwind CSS)
+- **Database** – Supabase Postgres with `pg_trgm` enabled for fuzzy search
+- **Auth** – Authelia OIDC (external identity) with optional Supabase Auth fallback
+- **Storage** – Supabase Storage (private `product-images` bucket)
+- **Serverless** – Supabase Edge Functions (Deno) for checkout, admin tooling, and storage utilities
 
-There are several ways of editing your application.
+## Environment configuration
 
-**Use Lovable**
+Create `.env.local` (used by Vite and the Supabase CLI scripts). The following variables are required:
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/456ffb1c-c238-4c26-a1e8-3f87adad4ad5) and start prompting.
+| Variable | Description |
+| --- | --- |
+| `VITE_SUPABASE_URL` | Supabase project URL |
+| `VITE_SUPABASE_ANON_KEY` | Supabase anonymous API key (used in the SPA) |
+| `VITE_AUTHELIA_ISSUER` | Base URL of the Authelia OIDC issuer |
+| `VITE_AUTHELIA_CLIENT_ID` | Authelia OIDC client ID registered for this SPA |
+| `VITE_AUTHELIA_REDIRECT_URI` | Optional override for the callback path (defaults to `/auth/callback`) |
+| `VITE_AUTHELIA_SCOPE` | Requested scopes (defaults to `openid profile email`) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Required when deploying/running Edge Functions locally |
+| `SUPABASE_DB_URL` | Postgres connection string used by Edge Functions for transactions (falls back to `DATABASE_URL`) |
+| `CHECKOUT_WEBHOOK_SECRET` | Shared secret required when calling the checkout webhook function |
 
-Changes made via Lovable will be committed automatically to this repo.
+> Tip: keep `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_DB_URL`, and `CHECKOUT_WEBHOOK_SECRET` in `.env.local` but do **not** expose them to the browser. They are consumed by the Supabase CLI and Edge Functions only.
 
-**Use your preferred IDE**
+## Local development workflow
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```bash
+# Install dependencies
+npm install
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+# Boot Supabase locally (Postgres, Storage, etc.)
+npx supabase start
 
-Follow these steps:
+# Apply migrations and seeds from supabase/migrations and supabase/seed/
+npm run dev:db:reset
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Run the SPA
 npm run dev
 ```
 
-## Connecting Supabase & Authelia
+### Database migrations & seeds
 
-This project now persists data in Supabase and delegates authentication to [Authelia](https://www.authelia.com/) via its OpenID Connect provider. Authelia must be served over HTTPS and your reverse proxy has to forward the headers required by Authelia before the application will accept authenticated sessions.
+- Migrations live under `supabase/migrations/<timestamp>_*.sql` and can be (re)applied locally using `npm run dev:db:reset`.
+- Seeds live in `supabase/seed/seed.sql` and provision:
+  - 2 publishers, 3 platforms, 5 categories
+  - 12 demo games with stock entries
+  - an admin profile (`external_id = admin-dev`) and a demo shopper (`external_id = user-dev`)
+- To deploy schema changes to a remote project use:
 
-1. Copy `.env.example` to `.env.local` (or `.env`) and provide the credentials for your Supabase project and Authelia deployment. The example file is pre-populated with the Supabase project shared for this app:
+```bash
+npx supabase link --project-ref <your-project-ref>
+npm run dev:db:push
+```
 
-   ```sh
-   cp .env.example .env.local
-   ```
+## Authelia identity mapping & roles
 
-   | Variable | Description |
-   | --- | --- |
-   | `VITE_SUPABASE_URL` | Supabase project URL |
-   | `VITE_SUPABASE_ANON_KEY` | Anonymous API key |
-   | `VITE_AUTHELIA_ISSUER` | Base URL of your Authelia OIDC issuer (e.g. `https://auth.example.com`) |
-   | `VITE_AUTHELIA_CLIENT_ID` | OIDC client ID registered in Authelia for this SPA |
-   | `VITE_AUTHELIA_REDIRECT_URI` | (Optional) override for the callback route, defaults to `/auth/callback` |
-   | `VITE_AUTHELIA_SCOPE` | (Optional) scopes requested from Authelia, defaults to `openid profile email` |
+Supabase stores user metadata in `public.profiles`. Every row has a stable `external_id` that should match the subject (`sub`) claim provided by Authelia. When a user signs in via OIDC:
 
-2. Apply the database schema using the Supabase CLI so the `profiles` and `tracker_snapshots` tables are created. The repository already contains a migration in `supabase/migrations`:
+1. Authelia issues a JWT to the SPA.
+2. The SPA forwards the JWT to Supabase via the `Authorization: Bearer <token>` header.
+3. Database policies compare `profiles.external_id` against `request.jwt().sub` (or `auth.uid()` when Supabase Auth is used) via the helper function `public.current_user_external_id()`.
 
-   ```sh
-   # Ensure dependencies are installed
-   npm install
+To provision a user profile, insert a row with the matching subject. Promote an account to admin by setting `role = 'admin'` for the desired `external_id`:
 
-   # Create or update the local Supabase containers
-   npx supabase start
+```sql
+insert into public.profiles (external_id, email, display_name, role)
+values ('my-oidc-sub', 'admin@example.com', 'Ops Admin', 'admin')
+on conflict (external_id) do update set role = excluded.role;
+```
 
-   # Apply the migrations defined in supabase/migrations
-   npx supabase db reset
-   ```
+Admin-only mutations (catalog CRUD, inventory management, product uploads) require the caller to carry a JWT whose subject resolves to an admin profile.
 
-   Running against a remote project? Set your database connection with `npx supabase link` and then run `npx supabase db push`.
+## Supabase features implemented
 
-3. Configure an OAuth 2.0 client in Authelia that matches the redirect URI above. When users click “Continue with Authelia” they’ll be redirected to Authelia for login and then returned to `/auth/callback`.
+| Feature | Notes |
+| --- | --- |
+| **Row Level Security** | Enabled across all user-facing tables. Policies respect Authelia subjects via helper functions so the same schema works with Supabase Auth or external OIDC providers. |
+| **Catalog schema** | Tables for games, publishers, platforms, categories, inventory, carts, orders, order items, reviews, and wishlists with appropriate constraints and indexes (including trigram search on titles). |
+| **Storage** | Private `product-images` bucket. Admins (or the service role) can manage content. Clients obtain signed URLs via an Edge Function. |
+| **Seeds** | Demo catalog data and baseline profiles in `supabase/seed/seed.sql`. |
+| **Edge Functions** | Transactional checkout flow, webhook consumer, admin catalog interface, and storage signing utility. OpenAPI specs sit beside each function. |
 
-Once the environment variables are set the app will automatically use Supabase for persistence; without them it falls back to the local demo mode.
+## Edge Functions
 
-**Edit a file directly in GitHub**
+The Supabase CLI deploys functions by folder path (slashes are translated to hyphenated names by the gateway). Use the helper npm script to deploy all functions:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+npm run deploy:functions
+```
 
-**Use GitHub Codespaces**
+Functions overview:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Invoke name | Source folder | Purpose |
+| --- | --- | --- |
+| `checkout-create` | `supabase/functions/checkout/create` | Turn the caller's cart into an order within a serializable transaction. |
+| `checkout-webhook` | `supabase/functions/checkout/webhook` | Mock webhook to mark orders as paid/failed. Requires `CHECKOUT_WEBHOOK_SECRET`. |
+| `catalog-admin` | `supabase/functions/catalog/admin` | Admin-only CRUD for games, publishers, platforms, and categories. |
+| `storage-sign-url` | `supabase/functions/storage/sign-url` | Issue short-lived signed URLs for private assets. |
 
-## What technologies are used for this project?
+### Invocation examples
 
-This project is built with:
+Using `@supabase/supabase-js` in the SPA:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```ts
+const supabase = getSupabaseClient();
+await supabase.functions.invoke('checkout-create', { body: { payment_provider: 'mock-pay' } });
+await supabase.functions.invoke('storage-sign-url', { body: { path: 'covers/skyward-vanguard.jpg' } });
+```
 
-## How can I deploy this project?
+Using `curl` against a deployed project:
 
-Simply open [Lovable](https://lovable.dev/projects/456ffb1c-c238-4c26-a1e8-3f87adad4ad5) and click on Share -> Publish.
+```bash
+curl -X POST "https://<project>.functions.supabase.co/checkout/create" \
+  -H "Authorization: Bearer $USER_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"payment_provider":"mock-pay"}'
 
-## Can I connect a custom domain to my Lovable project?
+curl -X POST "https://<project>.functions.supabase.co/checkout/webhook" \
+  -H "x-webhook-secret: $CHECKOUT_WEBHOOK_SECRET" \
+  -H "Content-Type: application/json" \
+  -d '{"order_id":"<uuid>","status":"paid","payment_reference":"stripe_evt_123"}'
+```
 
-Yes, you can!
+Each folder under `supabase/functions/**` contains an `openapi.yaml` describing request/response formats.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## SPA data utilities
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Typed Supabase helpers live in `src/lib/api/`:
+
+- `supabaseClient.ts` – singleton factory for `SupabaseClient`
+- `catalog.ts` – list/search games, fetch a game by slug, request signed storage URLs
+- `cart.ts` – create carts, add/update/remove items, clear carts
+- `orders.ts` – invoke checkout and read past orders
+- `account.ts` – load/update the current profile
+- `auth.ts` – decode JWTs and detect admin claims
+- `types.ts` – shared TypeScript models for the API layer
+
+## Storage usage
+
+Product and marketing assets belong in the private `product-images` bucket. Admins can upload or delete files through the Supabase dashboard or via the admin Edge Function. The SPA must request signed URLs via `storage-sign-url` before displaying assets.
+
+## Continuous integration
+
+Pull requests automatically validate migrations via GitHub Actions. The workflow spins up Supabase locally, applies migrations, seeds the database, and runs a smoke SQL query to ensure the catalog is reachable.
+
+## Handy scripts
+
+| Script | Purpose |
+| --- | --- |
+| `npm run dev` | Start the Vite dev server |
+| `npm run lint` | Lint the codebase |
+| `npm run dev:db:reset` | Reset the local Supabase instance with the latest migrations + seeds |
+| `npm run dev:db:push` | Push migrations to the linked remote project |
+| `npm run deploy:functions` | Deploy all Edge Functions |
+
+## Additional references
+
+- [Supabase CLI docs](https://supabase.com/docs/reference/cli) for linking, pushing, and managing functions
+- [Authelia OIDC documentation](https://www.authelia.com/docs/integration/openid-connect/introduction/) for configuring identity providers

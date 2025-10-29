@@ -1,0 +1,78 @@
+openapi: 3.1.0
+info:
+  title: Storage Sign URL Function
+  version: 1.0.0
+paths:
+  /storage/sign-url:
+    post:
+      summary: Generate a signed URL for storage objects
+      operationId: storageSignUrl
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path]
+              properties:
+                path:
+                  type: string
+                bucket:
+                  type: string
+                  default: product-images
+                expires_in:
+                  type: integer
+                  description: Expiration in seconds (max 3600)
+      responses:
+        '200':
+          description: Signed URL created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      signed_url:
+                        type: string
+                        format: uri
+                      expires_at:
+                        type: string
+                        format: date-time
+                      path:
+                        type: string
+                      bucket:
+                        type: string
+        '4XX':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+          required: [code, message]

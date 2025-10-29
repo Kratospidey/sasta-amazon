@@ -1,0 +1,71 @@
+openapi: 3.1.0
+info:
+  title: Checkout Create Function
+  version: 1.0.0
+paths:
+  /checkout/create:
+    post:
+      summary: Create a checkout session for the caller's cart
+      operationId: checkoutCreate
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_provider:
+                  type: string
+                  description: Optional payment provider override
+      responses:
+        '200':
+          description: Checkout created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      order_id:
+                        type: string
+                        format: uuid
+                      payment_intent:
+                        type: string
+                      total_in_cents:
+                        type: integer
+                      payment_provider:
+                        type: string
+        '4XX':
+          description: Client error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '5XX':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+          required: [code, message]
