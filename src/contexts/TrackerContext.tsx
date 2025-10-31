@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
+import { evaluateAutomaticAchievements } from "@/lib/achievementRules";
 import {
   ActivityEvent,
   Achievement,
@@ -22,6 +23,80 @@ const createId = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
     : `id-${Math.random().toString(36).slice(2, 11)}`;
+
+type UnlockResult = {
+  snapshot: TrackerDataSnapshot;
+  unlocked: string[];
+};
+
+const appendAchievementUnlocks = (
+  snapshot: TrackerDataSnapshot,
+  userId: string,
+  achievementIds: string[],
+  timestamp: string,
+): UnlockResult => {
+  if (!userId || achievementIds.length === 0) {
+    return { snapshot, unlocked: [] };
+  }
+
+  const existingUnlocks = new Set(
+    snapshot.achievementUnlocks
+      .filter((unlock) => unlock.userId === userId)
+      .map((unlock) => unlock.achievementId),
+  );
+
+  const validIds = achievementIds.filter(
+    (achievementId) =>
+      !existingUnlocks.has(achievementId) &&
+      snapshot.achievements.some((achievement) => achievement.id === achievementId),
+  );
+
+  if (validIds.length === 0) {
+    return { snapshot, unlocked: [] };
+  }
+
+  const unlockEntries = validIds.map((achievementId) => ({
+    id: `unlock-${createId()}`,
+    userId,
+    achievementId,
+    unlockedAt: timestamp,
+  }));
+
+  const activityEntries = validIds.map((achievementId) => {
+    const achievement = snapshot.achievements.find((candidate) => candidate.id === achievementId);
+    return {
+      id: `activity-${createId()}`,
+      userId,
+      type: "achievement" as const,
+      title: `Unlocked ${achievement?.name ?? "an achievement"}`,
+      description: achievement?.description ?? "Achievement unlocked",
+      createdAt: timestamp,
+      relatedAchievementId: achievementId,
+      relatedCategory: achievement?.category,
+    };
+  });
+
+  return {
+    snapshot: {
+      ...snapshot,
+      achievementUnlocks: [...unlockEntries, ...snapshot.achievementUnlocks],
+      activity: [...activityEntries, ...snapshot.activity].slice(0, 40),
+    },
+    unlocked: validIds,
+  };
+};
+
+const applyAutomaticUnlocks = (
+  snapshot: TrackerDataSnapshot,
+  userId: string,
+  timestamp: string,
+): UnlockResult => {
+  if (!userId) {
+    return { snapshot, unlocked: [] };
+  }
+  const achievementsToUnlock = evaluateAutomaticAchievements(snapshot, userId);
+  return appendAchievementUnlocks(snapshot, userId, achievementsToUnlock, timestamp);
+};
 
 const DEFAULT_LIST_CONFIG: Record<string, { name: string; type: List["type"] }> = {
   backlog: { name: "Backlog", type: "default" },
@@ -149,14 +224,31 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
     if (shouldUseRemote && user) {
       void fetchRemoteSnapshot(user.id)
         .then((snapshot) => {
-          setData(snapshot);
+          const timestamp = new Date().toISOString();
+          const { snapshot: withUnlocks, unlocked } = applyAutomaticUnlocks(snapshot, user.id, timestamp);
+          if (unlocked.length) {
+            void upsertRemoteSnapshot(user.id, withUnlocks).catch((error) => {
+              console.error("Failed to persist automatic achievements", error);
+            });
+          }
+          setData(withUnlocks);
         })
         .catch((error) => {
           console.error("Failed to fetch tracker snapshot", error);
           setData(defaultTrackerData);
         });
     } else {
-      setData(readLocalData());
+      const snapshot = readLocalData();
+      if (user) {
+        const timestamp = new Date().toISOString();
+        const { snapshot: withUnlocks, unlocked } = applyAutomaticUnlocks(snapshot, user.id, timestamp);
+        if (unlocked.length) {
+          persistLocalData(withUnlocks);
+        }
+        setData(withUnlocks);
+      } else {
+        setData(snapshot);
+      }
     }
   }, [shouldUseRemote, user]);
 
@@ -218,14 +310,20 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
 
   const addGameToList = useCallback<TrackerContextValue["addGameToList"]>(({ listId, gameId, status }) => {
     updateData((snapshot) => {
+      const now = new Date().toISOString();
+      const list = snapshot.lists.find((candidate) => candidate.id === listId);
       const existing = snapshot.listItems.find((item) => item.listId === listId && item.gameId === gameId);
       if (existing) {
-        return {
+        const nextSnapshot = {
           ...snapshot,
           listItems: snapshot.listItems.map((item) =>
             item.id === existing.id ? { ...item, status: status ?? item.status } : item,
           ),
         };
+        if (list?.userId) {
+          return applyAutomaticUnlocks(nextSnapshot, list.userId, now).snapshot;
+        }
+        return nextSnapshot;
       }
 
       const newItem: ListItem = {
@@ -239,22 +337,26 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
         isInstalled: false,
       };
 
-      return {
+      const nextSnapshot: TrackerDataSnapshot = {
         ...snapshot,
         listItems: [...snapshot.listItems, newItem],
         activity: [
           {
             id: `activity-${createId()}`,
-            userId: snapshot.lists.find((list) => list.id === listId)?.userId ?? "",
+            userId: list?.userId ?? "",
             type: "list",
             title: `Added ${snapshot.games.find((g) => g.id === gameId)?.title ?? "a game"} to list`,
             description: "Game catalog updated.",
-            createdAt: new Date().toISOString(),
+            createdAt: now,
             relatedGameId: gameId,
           },
           ...snapshot.activity,
         ].slice(0, 40),
       };
+      if (list?.userId) {
+        return applyAutomaticUnlocks(nextSnapshot, list.userId, now).snapshot;
+      }
+      return nextSnapshot;
     });
   }, [updateData]);
 
@@ -308,7 +410,7 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
       const item = snapshot.listItems.find(
         (li) => li.gameId === gameId && snapshot.lists.find((l) => l.id === li.listId)?.userId === userId,
       );
-      return {
+      const nextSnapshot: TrackerDataSnapshot = {
         ...snapshot,
         listItems: snapshot.listItems.map((li) =>
           li.id === item?.id
@@ -349,49 +451,27 @@ export const TrackerProvider = ({ children }: { children: React.ReactNode }) => 
           ...snapshot.activity,
         ].slice(0, 40),
       };
+      return applyAutomaticUnlocks(nextSnapshot, userId, now).snapshot;
     });
   }, [updateData]);
 
   const unlockAchievement = useCallback<TrackerContextValue["unlockAchievement"]>(({ userId, achievementId }) => {
     const now = new Date().toISOString();
-    updateData((snapshot) => {
-      if (snapshot.achievementUnlocks.some((unlock) => unlock.userId === userId && unlock.achievementId === achievementId)) {
-        return snapshot;
-      }
-      const achievement = snapshot.achievements.find((ach) => ach.id === achievementId);
-      return {
-        ...snapshot,
-        achievementUnlocks: [
-          {
-            id: `unlock-${createId()}`,
-            userId,
-            achievementId,
-            unlockedAt: now,
-          },
-          ...snapshot.achievementUnlocks,
-        ],
-        activity: [
-          {
-            id: `activity-${createId()}`,
-            userId,
-            type: "achievement",
-            title: `Unlocked ${achievement?.name ?? "an achievement"}`,
-            description: achievement?.description ?? "Achievement unlocked",
-            createdAt: now,
-            relatedAchievementId: achievementId,
-            relatedCategory: achievement?.category,
-          },
-          ...snapshot.activity,
-        ].slice(0, 40),
-      };
-    });
+    updateData((snapshot) => appendAchievementUnlocks(snapshot, userId, [achievementId], now).snapshot);
   }, [updateData]);
 
   const recordActivity = useCallback<TrackerContextValue["recordActivity"]>((event) => {
-    updateData((snapshot) => ({
-      ...snapshot,
-      activity: [event, ...snapshot.activity].slice(0, 40),
-    }));
+    updateData((snapshot) => {
+      const nextSnapshot: TrackerDataSnapshot = {
+        ...snapshot,
+        activity: [event, ...snapshot.activity].slice(0, 40),
+      };
+      return applyAutomaticUnlocks(
+        nextSnapshot,
+        event.userId,
+        event.createdAt ?? new Date().toISOString(),
+      ).snapshot;
+    });
   }, [updateData]);
 
   const deleteList = useCallback<TrackerContextValue["deleteList"]>((listId) => {

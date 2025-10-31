@@ -11,6 +11,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import type { Achievement } from "@/lib/trackerTypes";
+import { isAutomaticallyTrackedAchievement } from "@/lib/achievementRules";
 
 const rarityColor: Record<string, string> = {
   common: "bg-muted text-foreground",
@@ -210,6 +211,7 @@ const Achievements = () => {
                       <div className="grid gap-3 md:grid-cols-2">
                         {categoryAchievements.map((achievement) => {
                           const unlock = unlocked.find((item) => item.achievementId === achievement.id);
+                          const automated = isAutomaticallyTrackedAchievement(achievement.id);
                           return (
                             <div
                               key={achievement.id}
@@ -220,6 +222,12 @@ const Achievements = () => {
                                 <Badge className={rarityColor[achievement.rarity]}>{achievement.rarity}</Badge>
                               </div>
                               <p className="text-muted-foreground">{achievement.description}</p>
+                              {automated && (
+                                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                  <Badge variant="outline">Auto-tracked</Badge>
+                                  <span>Unlocks automatically once the condition is met.</span>
+                                </div>
+                              )}
                               <div className="flex items-center justify-between text-xs text-muted-foreground">
                                 <span>{achievement.xp} XP</span>
                                 <span>
@@ -228,7 +236,7 @@ const Achievements = () => {
                                     : "Not unlocked yet"}
                                 </span>
                               </div>
-                              {!unlock && (
+                              {!unlock && !automated && (
                                 <Button
                                   size="sm"
                                   variant="ghost"
@@ -237,6 +245,11 @@ const Achievements = () => {
                                 >
                                   Mark as unlocked
                                 </Button>
+                              )}
+                              {!unlock && automated && (
+                                <p className="text-xs italic text-muted-foreground">
+                                  Keep tracking your progress—this achievement will unlock for you.
+                                </p>
                               )}
                             </div>
                           );
