@@ -18,6 +18,7 @@ Create `.env.local` (used by Vite and the Supabase CLI scripts). The following v
 | --- | --- |
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anonymous API key (used in the SPA) |
+| `VITE_SUPABASE_EMAIL_REDIRECT_TO` | Optional override for Supabase email confirmations (absolute URL or path) |
 | `VITE_AUTHELIA_ISSUER` | Base URL of the Authelia OIDC issuer |
 | `VITE_AUTHELIA_CLIENT_ID` | Authelia OIDC client ID registered for this SPA |
 | `VITE_AUTHELIA_REDIRECT_URI` | Optional override for the callback path (defaults to `/auth/callback`) |
