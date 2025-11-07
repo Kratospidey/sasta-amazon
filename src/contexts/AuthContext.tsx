@@ -6,13 +6,14 @@ import {
   useMemo,
   useState,
 } from "react";
-import { autheliaClient, isAutheliaConfigured } from "@/lib/autheliaClient";
-import { supabase, isSupabaseConfigured } from "@/lib/supabaseClient";
+
+import { getSupabaseClient } from "@/lib/api/supabaseClient";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type AuthUser = {
   id: string;
   email: string;
-  password?: string;
+  password?: string; // only used in local mode
   displayName: string;
   avatarColor: string;
   bio: string;
@@ -22,13 +23,18 @@ export type AuthUser = {
 export type AuthContextValue = {
   user: AuthUser | null;
   loading: boolean;
-  users: AuthUser[];
+  users: AuthUser[]; // mostly used in local demo mode
   login: (email?: string, password?: string) => Promise<void>;
-  register: (input?: { email?: string; password?: string; displayName?: string }) => Promise<void>;
+  register: (input?: {
+    email?: string;
+    password?: string;
+    displayName?: string;
+  }) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (
-    updates: Partial<Omit<AuthUser, "id" | "email" | "password">> & { password?: string },
+    updates: Partial<AuthUser> & { password?: string }
   ) => Promise<void>;
+  // kept for API compatibility; no-ops in Supabase/local modes
   beginLogin: (options?: { redirectTo?: string }) => Promise<void>;
   completeLogin: (params: URLSearchParams) => Promise<void>;
   usingAuthelia: boolean;
@@ -46,302 +52,248 @@ const defaultUser: AuthUser = {
   privacy: "public",
 };
 
-const TOKENS_KEY = "gamevault-authelia-session";
-const CHALLENGE_KEY = "gamevault-authelia-challenge";
-
 const isBrowser = typeof window !== "undefined";
 
-type StoredTokens = {
-  access: string;
-  refresh: string;
-  idToken?: string;
-  expiresAt: number;
-};
+/* -------------------------------------------------------------------------- */
+/*                         Supabase-backed auth provider                      */
+/* -------------------------------------------------------------------------- */
 
-type TokenPayload = {
-  sub?: string;
-  email?: string;
-  name?: string;
-  picture?: string;
-};
+function mapProfileToAuthUser(profile: any, fallbackEmail: string): AuthUser {
+  return {
+    id: profile?.id ?? "unknown-profile",
+    email: profile?.email ?? fallbackEmail,
+    displayName:
+      profile?.display_name ?? profile?.email ?? fallbackEmail ?? "Player",
+    avatarColor: "from-secondary to-primary",
+    bio: profile?.bio ?? "",
+    privacy: "friends",
+  };
+}
 
-const decodeToken = (token?: string): TokenPayload | null => {
-  try {
-    if (!token) return null;
-    const [, payload] = token.split(".");
-    if (!payload) return null;
-    const normalised = payload.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = normalised.padEnd(normalised.length + ((4 - (normalised.length % 4)) % 4), "=");
-    const decoded = isBrowser ? window.atob(padded) : Buffer.from(padded, "base64").toString("utf-8");
-    return JSON.parse(decoded) as TokenPayload;
-  } catch (error) {
-    console.error("Failed to decode access token", error);
-    return null;
+async function ensureProfileForUser(
+  supabase: SupabaseClient,
+  opts: { userId: string; email: string; displayName?: string }
+) {
+  // RLS + unique(external_id) guarantees at most one row visible
+  const { data, error } = await supabase
+    .from("profiles")
+    .select(
+      "id, external_id, email, display_name, avatar_url, bio, role, created_at, updated_at"
+    )
+    .maybeSingle();
+
+  if (error && error.code !== "PGRST116") {
+    throw error;
   }
-};
 
-const getStoredTokens = (): StoredTokens | null => {
-  if (!isBrowser) return null;
-  const raw = window.localStorage.getItem(TOKENS_KEY);
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw) as StoredTokens;
-    if (!parsed.access || !parsed.refresh || !parsed.expiresAt) {
+  if (data) return data;
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("profiles")
+    .insert({
+      external_id: opts.userId,
+      email: opts.email,
+      display_name: opts.displayName ?? opts.email ?? "Player",
+      avatar_url: null,
+      bio: "",
+    })
+    .select(
+      "id, external_id, email, display_name, avatar_url, bio, role, created_at, updated_at"
+    )
+    .single();
+
+  if (insertError) throw insertError;
+  return inserted;
+}
+
+const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [supabase] = useState<SupabaseClient | null>(() => {
+    try {
+      return getSupabaseClient();
+    } catch {
       return null;
     }
-    return parsed;
-  } catch (error) {
-    console.error("Failed to parse stored tokens", error);
-    return null;
-  }
-};
+  });
 
-const persistTokens = (tokens: StoredTokens | null) => {
-  if (!isBrowser) return;
-  if (!tokens) {
-    window.localStorage.removeItem(TOKENS_KEY);
-    return;
-  }
-  window.localStorage.setItem(TOKENS_KEY, JSON.stringify(tokens));
-};
+  // Initial load + subscribe to auth state changes
+  useEffect(() => {
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
 
-const storeChallenge = (challenge: unknown) => {
-  if (!isBrowser) return;
-  window.sessionStorage.setItem(CHALLENGE_KEY, JSON.stringify(challenge));
-};
+    let cancelled = false;
 
-const readChallenge = (): { state: string; verifier?: string; redirectURI?: string } | null => {
-  if (!isBrowser) return null;
-  const raw = window.sessionStorage.getItem(CHALLENGE_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw) as { state: string; verifier?: string; redirectURI?: string };
-  } catch (error) {
-    console.error("Failed to parse stored challenge", error);
-    return null;
-  }
-};
-
-const clearChallenge = () => {
-  if (!isBrowser) return;
-  window.sessionStorage.removeItem(CHALLENGE_KEY);
-};
-
-const getDefaultRedirectURI = () => {
-  if (!isBrowser) return "";
-  return (
-    (import.meta.env.VITE_AUTHELIA_REDIRECT_URI as string | undefined) ??
-    `${window.location.origin}/auth/callback`
-  );
-};
-
-const formatProfile = (profile: {
-  id: string;
-  email?: string | null;
-  display_name?: string | null;
-  avatar_color?: string | null;
-  bio?: string | null;
-  privacy?: string | null;
-}): AuthUser => ({
-  id: profile.id,
-  email: profile.email ?? "",
-  displayName: profile.display_name ?? profile.email ?? "Player",
-  avatarColor: profile.avatar_color ?? "from-secondary to-primary",
-  bio: profile.bio ?? "",
-  privacy: (profile.privacy as AuthUser["privacy"]) ?? "friends",
-});
-
-const RemoteAuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [tokens, setTokens] = useState<StoredTokens | null>(() => getStoredTokens());
-  const [loading, setLoading] = useState(true);
-
-  const loadProfileFromTokens = useCallback(
-    async (session: StoredTokens | null) => {
-      if (!session) {
-        setUser(null);
-        return;
-      }
-      if (!supabase || !autheliaClient) {
-        setUser(null);
-        return;
-      }
-      const payload = decodeToken(session.idToken ?? session.access);
-      if (!payload?.sub) {
-        console.warn("Missing subject in Authelia token");
-        setUser(null);
-        return;
-      }
-      const identifier = payload.sub;
-      const email = payload.email ?? "";
-      const fallbackDisplay = payload.name ?? (email ? email.split("@")[0] : "Explorer");
+    const init = async () => {
+      setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("id,email,display_name,avatar_color,bio,privacy")
-          .eq("id", identifier)
-          .maybeSingle();
+        const { data } = await supabase.auth.getUser();
+        const authUser = data.user;
 
-        if (error && error.code !== "PGRST116") {
-          throw error;
-        }
-
-        if (!data) {
-          const { data: created, error: insertError } = await supabase
-            .from("profiles")
-            .upsert(
-              {
-                id: identifier,
-                email,
-                display_name: fallbackDisplay,
-                avatar_color: "from-secondary to-primary",
-                bio: "",
-                privacy: "friends",
-              },
-              { onConflict: "id" },
-            )
-            .select("id,email,display_name,avatar_color,bio,privacy")
-            .single();
-
-          if (insertError) {
-            throw insertError;
-          }
-
-          setUser(formatProfile(created));
+        if (!authUser) {
+          if (!cancelled) setUser(null);
           return;
         }
 
-        setUser(formatProfile(data));
-      } catch (error) {
-        console.error("Failed to load profile from Supabase", error);
-        setUser(null);
-      }
-    },
-    [supabase, autheliaClient],
-  );
+        const profile = await ensureProfileForUser(supabase, {
+          userId: authUser.id,
+          email: authUser.email ?? "",
+        });
 
-  useEffect(() => {
-    let cancelled = false;
-    const initialise = async () => {
-      setLoading(true);
-      try {
-        await loadProfileFromTokens(tokens);
-      } finally {
         if (!cancelled) {
-          setLoading(false);
+          setUser(
+            mapProfileToAuthUser(profile, authUser.email ?? "player@example.com")
+          );
         }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
-    void initialise();
+
+    void init();
+
+    const { data: sub } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        const authUser = session?.user;
+        if (!authUser) {
+          setUser(null);
+          return;
+        }
+
+        const profile = await ensureProfileForUser(supabase, {
+          userId: authUser.id,
+          email: authUser.email ?? "",
+        });
+
+        setUser(
+          mapProfileToAuthUser(profile, authUser.email ?? "player@example.com")
+        );
+      }
+    );
+
     return () => {
       cancelled = true;
+      sub?.subscription?.unsubscribe();
     };
-  }, [tokens, loadProfileFromTokens]);
+  }, [supabase]);
 
-  const logout = useCallback(async () => {
-    setTokens(null);
-    persistTokens(null);
-    setUser(null);
-  }, []);
-
-  useEffect(() => {
-    if (!tokens || !autheliaClient || !isBrowser) return;
-    const timeout = window.setTimeout(async () => {
-      try {
-        const refreshed = await autheliaClient.refresh(tokens.refresh);
-        const next: StoredTokens = {
-          access: refreshed.access,
-          refresh: refreshed.refresh,
-          idToken: refreshed.idToken ?? tokens.idToken,
-          expiresAt: Date.now() + refreshed.expiresIn * 1000,
-        };
-        setTokens(next);
-        persistTokens(next);
-      } catch (error) {
-        console.error("Failed to refresh Authelia session", error);
-        await logout();
-      }
-    }, Math.max(tokens.expiresAt - Date.now() - 60_000, 5_000));
-
-    return () => window.clearTimeout(timeout);
-  }, [tokens, logout]);
-
-  useEffect(() => {
-    persistTokens(tokens);
-  }, [tokens]);
-
-  const beginLogin = useCallback<AuthContextValue["beginLogin"]>(async (options) => {
-    if (!autheliaClient) {
-      throw new Error("Authelia client is not configured");
+  const register = useCallback<
+    AuthContextValue["register"]
+  >(async ({ email, password, displayName } = {}) => {
+    if (!supabase) {
+      throw new Error("Supabase client is not configured");
     }
-    if (!isBrowser) return;
-    const redirectURI = options?.redirectTo ?? getDefaultRedirectURI();
-    const { challenge, url } = await autheliaClient.authorize(redirectURI);
-    storeChallenge({ ...challenge, redirectURI });
-    window.location.href = url;
-  }, [autheliaClient]);
-
-  const completeLogin = useCallback<AuthContextValue["completeLogin"]>(async (params) => {
-    if (!autheliaClient) {
-      throw new Error("Authelia client is not configured");
+    if (!email || !password) {
+      throw new Error("Email and password are required");
     }
-    const code = params.get("code");
-    const state = params.get("state");
-    if (!code || !state) {
-      throw new Error("Missing authorization response parameters");
-    }
-    const stored = readChallenge();
-    if (!stored) {
-      throw new Error("Sign-in session has expired. Start the flow again.");
-    }
-    if (stored.state !== state) {
-      throw new Error("Authorization state mismatch");
-    }
-    const redirectURI = stored.redirectURI ?? getDefaultRedirectURI();
-    const exchanged = await autheliaClient.exchange(code, redirectURI, stored.verifier);
-    const session: StoredTokens = {
-      access: exchanged.access,
-      refresh: exchanged.refresh,
-      idToken: exchanged.idToken,
-      expiresAt: Date.now() + exchanged.expiresIn * 1000,
-    };
-    clearChallenge();
-    setTokens(session);
-    persistTokens(session);
-  }, [autheliaClient]);
 
-  const login = useCallback<AuthContextValue["login"]>(async () => {
-    await beginLogin();
-  }, [beginLogin]);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) throw error;
+    const authUser = data.user;
+    if (!authUser) return;
 
-  const register = useCallback<AuthContextValue["register"]>(async () => {
-    await beginLogin();
-  }, [beginLogin]);
+    const profile = await ensureProfileForUser(supabase, {
+      userId: authUser.id,
+      email: authUser.email ?? email,
+      displayName,
+    });
 
-  const updateProfile = useCallback<AuthContextValue["updateProfile"]>(
-    async (updates) => {
+    setUser(
+      mapProfileToAuthUser(profile, authUser.email ?? "player@example.com")
+    );
+  }, [supabase]);
+
+  const login = useCallback<AuthContextValue["login"]>(
+    async (email, password) => {
       if (!supabase) {
         throw new Error("Supabase client is not configured");
       }
-      if (!user) return;
-      const payload = {
-        display_name: updates.displayName ?? user.displayName,
-        avatar_color: updates.avatarColor ?? user.avatarColor,
-        bio: updates.bio ?? user.bio,
-        privacy: updates.privacy ?? user.privacy,
-      };
-      const { data, error } = await supabase
-        .from("profiles")
-        .update(payload)
-        .eq("id", user.id)
-        .select("id,email,display_name,avatar_color,bio,privacy")
-        .single();
-      if (error) {
-        throw error;
+      if (!email || !password) {
+        throw new Error("Email and password are required");
       }
-      setUser(formatProfile(data));
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) throw error;
+
+      const authUser = data.user;
+      if (!authUser) {
+        setUser(null);
+        return;
+      }
+
+      const profile = await ensureProfileForUser(supabase, {
+        userId: authUser.id,
+        email: authUser.email ?? email,
+      });
+
+      setUser(
+        mapProfileToAuthUser(profile, authUser.email ?? "player@example.com")
+      );
     },
-    [user, supabase],
+    [supabase]
+  );
+
+  const logout = useCallback<AuthContextValue["logout"]>(async () => {
+    if (!supabase) {
+      setUser(null);
+      return;
+    }
+    await supabase.auth.signOut();
+    setUser(null);
+  }, [supabase]);
+
+  const updateProfile = useCallback<
+    AuthContextValue["updateProfile"]
+  >(async (updates) => {
+    if (!supabase || !user) return;
+
+    const payload: Record<string, unknown> = {
+      display_name: updates.displayName ?? user.displayName,
+      bio: updates.bio ?? user.bio,
+      // avatar_url: could be wired later
+    };
+
+    const { data, error } = await supabase
+      .from("profiles")
+      .update(payload)
+      .select(
+        "id, external_id, email, display_name, avatar_url, bio, role, created_at, updated_at"
+      )
+      .maybeSingle();
+
+    if (error) throw error;
+    if (!data) return;
+
+    setUser(
+      mapProfileToAuthUser(
+        data,
+        updates.email ?? user.email ?? "player@example.com"
+      )
+    );
+  }, [supabase, user]);
+
+  const beginLogin = useCallback<AuthContextValue["beginLogin"]>(
+    async () => {
+      // no-op in Supabase password mode (we use inline dialog)
+      return;
+    },
+    []
+  );
+
+  const completeLogin = useCallback<AuthContextValue["completeLogin"]>(
+    async () => {
+      // no-op; we don't use redirect-based OIDC here
+      return;
+    },
+    []
   );
 
   const value = useMemo<AuthContextValue>(
@@ -355,20 +307,31 @@ const RemoteAuthProvider = ({ children }: { children: React.ReactNode }) => {
       updateProfile,
       beginLogin,
       completeLogin,
-      usingAuthelia: true,
+      usingAuthelia: false,
     }),
-    [user, loading, login, register, logout, updateProfile, beginLogin, completeLogin],
+    [
+      user,
+      loading,
+      login,
+      register,
+      logout,
+      updateProfile,
+      beginLogin,
+      completeLogin,
+    ]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  );
 };
+
+/* -------------------------------------------------------------------------- */
+/*                     Local-only demo auth (existing behaviour)              */
+/* -------------------------------------------------------------------------- */
 
 const USERS_KEY = "gamevault-tracker-users";
 const SESSION_KEY = "gamevault-tracker-session";
-
-type LocalAuthProviderProps = {
-  children: React.ReactNode;
-};
 
 const loadUsers = (): AuthUser[] => {
   if (!isBrowser) {
@@ -386,8 +349,7 @@ const loadUsers = (): AuthUser[] => {
       return [defaultUser];
     }
     return parsed;
-  } catch (error) {
-    console.error("Failed to parse stored users", error);
+  } catch {
     window.localStorage.setItem(USERS_KEY, JSON.stringify([defaultUser]));
     return [defaultUser];
   }
@@ -403,7 +365,7 @@ const createId = () =>
     ? crypto.randomUUID()
     : `id-${Math.random().toString(36).slice(2, 11)}`;
 
-const LocalAuthProvider = ({ children }: LocalAuthProviderProps) => {
+const LocalAuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [users, setUsers] = useState<AuthUser[]>([]);
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -419,85 +381,93 @@ const LocalAuthProvider = ({ children }: LocalAuthProviderProps) => {
     setLoading(false);
   }, []);
 
-  const register = useCallback<Required<AuthContextValue>["register"]>(
-    async ({ email, password, displayName } = {}) => {
-      if (!email || !password || !displayName) {
-        throw new Error("Email, password and display name are required");
+  const register = useCallback<
+    AuthContextValue["register"]
+  >(async ({ email, password, displayName } = {}) => {
+    if (!email || !password || !displayName) {
+      throw new Error("Email, password and display name are required");
+    }
+    setUsers((prev) => {
+      if (prev.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
+        throw new Error("An account with that email already exists");
       }
-      setUsers((prev) => {
-        if (prev.some((u) => u.email.toLowerCase() === email.toLowerCase())) {
-          throw new Error("An account with that email already exists");
-        }
-        const newUser: AuthUser = {
-          id: `user-${createId()}`,
-          email,
-          password,
-          displayName,
-          avatarColor: "from-secondary to-primary",
-          bio: "",
-          privacy: "friends",
-        };
-        const next = [...prev, newUser];
-        persistUsers(next);
-        if (isBrowser) {
-          window.localStorage.setItem(SESSION_KEY, newUser.id);
-        }
-        setUser(newUser);
-        return next;
-      });
+      const newUser: AuthUser = {
+        id: `user-${createId()}`,
+        email,
+        password,
+        displayName,
+        avatarColor: "from-secondary to-primary",
+        bio: "",
+        privacy: "friends",
+      };
+      const next = [...prev, newUser];
+      persistUsers(next);
+      if (isBrowser) {
+        window.localStorage.setItem(SESSION_KEY, newUser.id);
+      }
+      setUser(newUser);
+      return next;
+    });
+  }, []);
+
+  const login = useCallback<AuthContextValue["login"]>(
+    async (email, password) => {
+      const match = users.find(
+        (u) =>
+          u.email.toLowerCase() === (email ?? "").toLowerCase() &&
+          u.password === password
+      );
+      if (!match) {
+        throw new Error("Invalid credentials");
+      }
+      if (isBrowser) {
+        window.localStorage.setItem(SESSION_KEY, match.id);
+      }
+      setUser(match);
     },
-    [],
+    [users]
   );
 
-  const login = useCallback<Required<AuthContextValue>["login"]>(async (email, password) => {
-    const match = users.find(
-      (u) => u.email.toLowerCase() === (email ?? "").toLowerCase() && u.password === password,
-    );
-    if (!match) {
-      throw new Error("Invalid credentials");
-    }
-    if (isBrowser) {
-      window.localStorage.setItem(SESSION_KEY, match.id);
-    }
-    setUser(match);
-  }, [users]);
-
-  const logout = useCallback(async () => {
+  const logout = useCallback<AuthContextValue["logout"]>(async () => {
     if (isBrowser) {
       window.localStorage.removeItem(SESSION_KEY);
     }
     setUser(null);
   }, []);
 
-  const updateProfile = useCallback<AuthContextValue["updateProfile"]>(
-    async (updates) => {
-      if (!user) return;
-      setUsers((prev) => {
-        const next = prev.map((u) => {
-          if (u.id !== user.id) return u;
-          const updated = {
-            ...u,
-            ...updates,
-            password: updates.password ?? u.password,
-          };
-          setUser(updated);
-          return updated;
-        });
-        persistUsers(next);
-        return next;
+  const updateProfile = useCallback<
+    AuthContextValue["updateProfile"]
+  >(async (updates) => {
+    if (!user) return;
+    setUsers((prev) => {
+      const next = prev.map((u) => {
+        if (u.id !== user.id) return u;
+        const updated: AuthUser = {
+          ...u,
+          ...updates,
+          password: updates.password ?? u.password,
+        };
+        setUser(updated);
+        return updated;
       });
+      persistUsers(next);
+      return next;
+    });
+  }, [user]);
+
+  const beginLogin = useCallback<AuthContextValue["beginLogin"]>(
+    async () => {
+      return;
     },
-    [user],
+    []
   );
 
-  const beginLogin = useCallback<AuthContextValue["beginLogin"]>(async () => {
-    // Local mode simply presents the inline login form.
-    return;
-  }, []);
-
-  const completeLogin = useCallback<AuthContextValue["completeLogin"]>(async () => {
-    return;
-  }, []);
+  const completeLogin = useCallback<AuthContextValue["completeLogin"]>(
+    async () => {
+      return;
+    },
+    []
+  );
 
   const value = useMemo<AuthContextValue>(
     () => ({
@@ -512,16 +482,37 @@ const LocalAuthProvider = ({ children }: LocalAuthProviderProps) => {
       completeLogin,
       usingAuthelia: false,
     }),
-    [user, loading, users, login, register, logout, updateProfile, beginLogin, completeLogin],
+    [
+      user,
+      loading,
+      users,
+      login,
+      register,
+      logout,
+      updateProfile,
+      beginLogin,
+      completeLogin,
+    ]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  );
 };
 
+/* -------------------------------------------------------------------------- */
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  if (isSupabaseConfigured && isAutheliaConfigured) {
-    return <RemoteAuthProvider>{children}</RemoteAuthProvider>;
+  // If Supabase is configured, prefer Supabase Auth.
+  const hasSupabaseEnv =
+    !!import.meta.env.VITE_SUPABASE_URL &&
+    !!import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (hasSupabaseEnv) {
+    return <SupabaseAuthProvider>{children}</SupabaseAuthProvider>;
   }
+
+  // Fallback: purely local demo auth
   return <LocalAuthProvider>{children}</LocalAuthProvider>;
 };
 
