@@ -84,7 +84,18 @@ enabled = true
 # Port to use for Supabase Studio.
 port = 54323
 # External URL of the API server that frontend connects to.
-api_url = "http://127.0.0.1"
+#
+# The API itself listens on the port declared in the [api] block above. The
+# default config that ships with the Supabase CLI points Studio to the full
+# `http://127.0.0.1:54321` URL. When this project was scaffolded, the port
+# portion was accidentally omitted which meant Studio would fall back to the
+# HTTP default (port 80). The Studio container proxies various administrative
+# operations – including the `restart` call that `supabase db reset` issues at
+# the end of the reset sequence. Because Studio was trying to reach
+# `http://127.0.0.1` on port 80, those restart requests returned `502` even
+# though the database migrations themselves succeeded. Restoring the expected
+# port ensures Studio forwards the restart request to the local API correctly.
+api_url = "http://127.0.0.1:54321"
 # OpenAI API Key to use for Supabase AI in the Supabase Studio.
 openai_api_key = "env(OPENAI_API_KEY)"
 
