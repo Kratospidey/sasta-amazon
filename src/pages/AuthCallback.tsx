@@ -45,7 +45,7 @@ const AuthCallback = () => {
           <CardTitle>Finishing sign-in</CardTitle>
           <CardDescription>
             {status === "pending"
-              ? "Verifying your Authelia credentials."
+              ? "Verifying your Supabase session."
               : status === "success"
                 ? "You're all set! Redirecting back to your profile."
                 : "We couldn't complete the sign-in flow."}

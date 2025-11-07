@@ -13,7 +13,6 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import type { Achievement } from "@/lib/trackerTypes";
-import { Loader2 } from "lucide-react";
 
 const achievementCategoryLabels: Record<Achievement["category"], string> = {
   library: "Library milestones",
@@ -23,7 +22,7 @@ const achievementCategoryLabels: Record<Achievement["category"], string> = {
 };
 
 const Profile = () => {
-  const { user, login, register, logout, updateProfile, loading, beginLogin, usingAuthelia } = useAuth();
+  const { user, login, register, logout, updateProfile, loading } = useAuth();
   const { lists, listItems, achievements, achievementUnlocks, activity } = useTracker();
   const [formState, setFormState] = useState({
     displayName: user?.displayName ?? "",
@@ -33,7 +32,6 @@ const Profile = () => {
   const [loginState, setLoginState] = useState({ email: "demo@gamevault.dev", password: "demo" });
   const [registerState, setRegisterState] = useState({ email: "", password: "", displayName: "" });
   const [isSaving, setIsSaving] = useState(false);
-  const [isRedirecting, setIsRedirecting] = useState(false);
 
   const userLists = user ? lists.filter((list) => list.userId === user.id) : [];
   const userItems = user
@@ -68,16 +66,6 @@ const Profile = () => {
     }
   };
 
-  const handleAutheliaLogin = async () => {
-    setIsRedirecting(true);
-    try {
-      await beginLogin();
-    } catch (error) {
-      setIsRedirecting(false);
-      toast.error(error instanceof Error ? error.message : "Unable to start Authelia sign-in");
-    }
-  };
-
   const handleSave = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!user) return;
@@ -103,93 +91,66 @@ const Profile = () => {
             <CardHeader>
               <CardTitle>Access your tracker</CardTitle>
               <CardDescription>
-                {usingAuthelia
-                  ? "Securely sign in with your Authelia identity provider."
-                  : "Sign in with the demo account or create a new profile."}
+                Sign in with the demo account or create a new profile.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {usingAuthelia ? (
-                <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    You will be redirected to Authelia to complete authentication. Ensure your Authelia deployment
-                    exposes the OIDC endpoints over HTTPS and that this application is registered with the correct
-                    callback URL.
-                  </p>
-                  <Button
-                    type="button"
-                    className="w-full"
-                    onClick={handleAutheliaLogin}
-                    disabled={isRedirecting}
-                  >
-                    {isRedirecting ? (
-                      <span className="flex items-center justify-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Redirecting...
-                      </span>
-                    ) : (
-                      "Continue with Authelia"
-                    )}
-                  </Button>
-                </div>
-              ) : (
-                <Tabs defaultValue="login" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="login">Login</TabsTrigger>
-                    <TabsTrigger value="register">Register</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="login" className="space-y-4 pt-4">
-                    <form onSubmit={handleLogin} className="space-y-3">
-                      <Input
-                        type="email"
-                        value={loginState.email}
-                        onChange={(event) => setLoginState((prev) => ({ ...prev, email: event.target.value }))}
-                        placeholder="Email"
-                        required
-                      />
-                      <Input
-                        type="password"
-                        value={loginState.password}
-                        onChange={(event) => setLoginState((prev) => ({ ...prev, password: event.target.value }))}
-                        placeholder="Password"
-                        required
-                      />
-                      <Button type="submit" className="w-full">
-                        Sign in
-                      </Button>
-                    </form>
-                  </TabsContent>
-                  <TabsContent value="register" className="space-y-4 pt-4">
-                    <form onSubmit={handleRegister} className="space-y-3">
-                      <Input
-                        value={registerState.displayName}
-                        onChange={(event) =>
-                          setRegisterState((prev) => ({ ...prev, displayName: event.target.value }))
-                        }
-                        placeholder="Display name"
-                        required
-                      />
-                      <Input
-                        type="email"
-                        value={registerState.email}
-                        onChange={(event) => setRegisterState((prev) => ({ ...prev, email: event.target.value }))}
-                        placeholder="Email"
-                        required
-                      />
-                      <Input
-                        type="password"
-                        value={registerState.password}
-                        onChange={(event) => setRegisterState((prev) => ({ ...prev, password: event.target.value }))}
-                        placeholder="Password"
-                        required
-                      />
-                      <Button type="submit" className="w-full">
-                        Create account
-                      </Button>
-                    </form>
-                  </TabsContent>
-                </Tabs>
-              )}
+              <Tabs defaultValue="login" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="login">Login</TabsTrigger>
+                  <TabsTrigger value="register">Register</TabsTrigger>
+                </TabsList>
+                <TabsContent value="login" className="space-y-4 pt-4">
+                  <form onSubmit={handleLogin} className="space-y-3">
+                    <Input
+                      type="email"
+                      value={loginState.email}
+                      onChange={(event) => setLoginState((prev) => ({ ...prev, email: event.target.value }))}
+                      placeholder="Email"
+                      required
+                    />
+                    <Input
+                      type="password"
+                      value={loginState.password}
+                      onChange={(event) => setLoginState((prev) => ({ ...prev, password: event.target.value }))}
+                      placeholder="Password"
+                      required
+                    />
+                    <Button type="submit" className="w-full">
+                      Sign in
+                    </Button>
+                  </form>
+                </TabsContent>
+                <TabsContent value="register" className="space-y-4 pt-4">
+                  <form onSubmit={handleRegister} className="space-y-3">
+                    <Input
+                      value={registerState.displayName}
+                      onChange={(event) =>
+                        setRegisterState((prev) => ({ ...prev, displayName: event.target.value }))
+                      }
+                      placeholder="Display name"
+                      required
+                    />
+                    <Input
+                      type="email"
+                      value={registerState.email}
+                      onChange={(event) => setRegisterState((prev) => ({ ...prev, email: event.target.value }))}
+                      placeholder="Email"
+                      required
+                    />
+                    <Input
+                      type="password"
+                      value={registerState.password}
+                      onChange={(event) => setRegisterState((prev) => ({ ...prev, password: event.target.value }))}
+                      placeholder="Password"
+                      required
+                    />
+                    <Button type="submit" className="w-full">
+                      Create account
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         ) : (

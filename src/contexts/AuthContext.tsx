@@ -37,7 +37,6 @@ export type AuthContextValue = {
   // kept for API compatibility; no-ops in Supabase/local modes
   beginLogin: (options?: { redirectTo?: string }) => Promise<void>;
   completeLogin: (params: URLSearchParams) => Promise<void>;
-  usingAuthelia: boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -205,6 +204,26 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error("Email and password are required");
     }
 
+    const redirectOverride = import.meta.env
+      .VITE_SUPABASE_EMAIL_REDIRECT_TO as string | undefined;
+
+    const emailRedirectTo = isBrowser
+      ? (() => {
+          if (!redirectOverride) {
+            return `${window.location.origin}/auth/callback`;
+          }
+
+          if (redirectOverride.startsWith("http")) {
+            return redirectOverride;
+          }
+
+          const path = redirectOverride.startsWith("/")
+            ? redirectOverride
+            : `/${redirectOverride}`;
+          return `${window.location.origin}${path}`;
+        })()
+      : undefined;
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -212,6 +231,7 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
         data: {
           display_name: displayName ?? email,
         },
+        emailRedirectTo,
       },
     });
     if (error) throw error;
@@ -333,7 +353,6 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
       updateProfile,
       beginLogin,
       completeLogin,
-      usingAuthelia: false,
     }),
     [
       user,
@@ -506,7 +525,6 @@ const LocalAuthProvider = ({ children }: { children: React.ReactNode }) => {
       updateProfile,
       beginLogin,
       completeLogin,
-      usingAuthelia: false,
     }),
     [
       user,
