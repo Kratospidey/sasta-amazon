@@ -39,7 +39,7 @@ const Index = () => {
           <Card>
             <CardHeader>
               <CardTitle>Welcome to GameVault Tracker</CardTitle>
-              <CardDescription>Sign in to start logging playtime, managing lists, and unlocking achievements.</CardDescription>
+              <CardDescription>Sign in to start logging play sessions, managing library statuses, and unlocking milestones.</CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild>

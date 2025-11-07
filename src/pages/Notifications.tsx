@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTracker } from "@/contexts/TrackerContext";
 import { formatDistanceToNow } from "date-fns";
 import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import type { Achievement } from "@/lib/trackerTypes";
 
@@ -27,7 +28,7 @@ const achievementCategoryLabels: Record<Achievement["category"], string> = {
 
 const Notifications = () => {
   const { user } = useAuth();
-  const { activity, games, achievements, recordActivity } = useTracker();
+  const { activity, games, achievements } = useTracker();
   const [activeTab, setActiveTab] = useState<keyof typeof typeLabels>("all");
 
   const userActivity = useMemo(
@@ -35,31 +36,49 @@ const Notifications = () => {
     [activity, user],
   );
 
+  const activityCounts = useMemo(() => {
+    return userActivity.reduce<Record<string, number>>(
+      (counts, event) => {
+        counts.all += 1;
+        counts[event.type] = (counts[event.type] ?? 0) + 1;
+        return counts;
+      },
+      { all: 0 },
+    );
+  }, [userActivity]);
+
   const filteredActivity = useMemo(() => {
     if (activeTab === "all") return userActivity;
     return userActivity.filter((event) => event.type === activeTab);
   }, [activeTab, userActivity]);
 
   const handleAddReminder = () => {
-    if (!user) {
-      toast.error("Sign in to schedule reminders");
-      return;
-    }
-    const title = window.prompt("Reminder title", "Check backlog this weekend");
-    if (!title) return;
-    const id = typeof crypto !== "undefined" && "randomUUID" in crypto
-      ? crypto.randomUUID()
-      : Math.random().toString(36).slice(2, 11);
-    recordActivity({
-      id: `activity-${id}`,
-      userId: user.id,
-      type: "reminder",
-      title,
-      description: "Manual reminder",
-      createdAt: new Date().toISOString(),
-    });
-    toast.success("Reminder added to your feed");
+    toast.info("Reminder scheduling is coming soon.");
   };
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto px-4 py-8">
+          <Card>
+            <CardHeader>
+              <CardTitle>Sign in to view activity</CardTitle>
+              <CardDescription>
+                Review play sessions, status changes, and milestones from your personal GameVault activity feed after
+                logging in.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild>
+                <Link to="/profile">Sign in to view activity</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,15 +92,22 @@ const Notifications = () => {
                 Track achievement unlocks, list changes, and play sessions for your account.
               </p>
             </div>
-            <Button variant="outline" size="sm" onClick={handleAddReminder}>
-              Add reminder
-            </Button>
+            <div className="flex flex-col items-start gap-1">
+              <Button variant="outline" size="sm" onClick={handleAddReminder} disabled>
+                Add reminder
+              </Button>
+              <span className="text-xs text-muted-foreground">Reminders are coming soon.</span>
+            </div>
           </section>
 
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as keyof typeof typeLabels)}>
             <TabsList className="flex flex-wrap">
               {Object.entries(typeLabels).map(([key, label]) => (
-                <TabsTrigger key={key} value={key}>
+                <TabsTrigger
+                  key={key}
+                  value={key}
+                  disabled={key !== "all" && (activityCounts[key] ?? 0) === 0}
+                >
                   {label}
                 </TabsTrigger>
               ))}
@@ -90,7 +116,7 @@ const Notifications = () => {
               {filteredActivity.length === 0 ? (
                 <Card>
                   <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                    No activity yet. Start tracking games to populate this feed.
+                    No activity yet. Log a play session on any game to populate this feed.
                   </CardContent>
                 </Card>
               ) : (
