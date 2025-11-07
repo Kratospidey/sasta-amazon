@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import Header from "@/components/layout/Header";
 import { useTracker } from "@/contexts/TrackerContext";
@@ -6,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -14,6 +16,7 @@ const GameDetails = () => {
   const { user } = useAuth();
   const { games, platforms, lists, listItems, addGameToList, updateListItem, logPlaySession, createList } =
     useTracker();
+  const [sessionMinutes, setSessionMinutes] = useState<number>(30);
 
   const game = games.find((candidate) => candidate.id === id);
   if (!game) {
@@ -56,54 +59,30 @@ const GameDetails = () => {
     return existing?.id || createList({ userId: user.id, name });
   };
 
-  const handleAddToBacklog = () => {
-    if (!user) {
-      toast.error("Sign in to track this game");
-      return;
-    }
-    const backlogId = getOrCreateListId("Backlog");
-    if (!backlogId) {
-      toast.error("Unable to create a backlog list");
-      return;
-    }
-    addGameToList({ listId: backlogId, gameId: game.id, status: "Backlog" });
-    toast.success("Added to backlog");
-  };
+  const libraryStatuses = ["Backlog", "Playing", "Completed", "Dropped"] as const;
 
-  const handleStartPlaying = () => {
+  const handleSetStatus = (status: (typeof libraryStatuses)[number]) => {
     if (!user) {
-      toast.error("Sign in to move this game to Playing");
+      toast.error("Sign in to update this status");
       return;
     }
-    const playingListId = getOrCreateListId("Playing");
-    if (!playingListId) {
-      toast.error("Unable to create a playing list");
+    const targetListId = getOrCreateListId(status);
+    if (!targetListId) {
+      toast.error("Unable to update status");
       return;
     }
-    if (trackedItem) {
-      updateListItem(trackedItem.id, { listId: playingListId, status: "Playing" });
-    } else {
-      addGameToList({ listId: playingListId, gameId: game.id, status: "Playing" });
-    }
-    toast.success("Marked as playing");
-  };
 
-  const handleComplete = () => {
-    if (!user) {
-      toast.error("Sign in to complete games");
-      return;
-    }
-    const completedListId = getOrCreateListId("Completed");
-    if (!completedListId) {
-      toast.error("Unable to create a completed list");
-      return;
-    }
     if (trackedItem) {
-      updateListItem(trackedItem.id, { listId: completedListId, status: "Completed", progress: 1 });
+      updateListItem(trackedItem.id, {
+        listId: targetListId,
+        status,
+        ...(status === "Completed" ? { progress: 1 } : {}),
+      });
     } else {
-      addGameToList({ listId: completedListId, gameId: game.id, status: "Completed" });
+      addGameToList({ listId: targetListId, gameId: game.id, status });
     }
-    toast.success("Marked as completed");
+
+    toast.success(`Status set to ${status}`);
   };
 
   const handleLogSession = () => {
@@ -111,8 +90,10 @@ const GameDetails = () => {
       toast.error("Sign in to log playtime");
       return;
     }
-    logPlaySession({ userId: user.id, gameId: game.id, minutes: 45 });
-    toast.success("Logged 45 minutes");
+    const safeMinutes = Number.isFinite(sessionMinutes) ? Math.max(5, Math.min(1440, sessionMinutes)) : 30;
+    setSessionMinutes(safeMinutes);
+    logPlaySession({ userId: user.id, gameId: game.id, minutes: safeMinutes });
+    toast.success(`Logged ${safeMinutes} minute${safeMinutes === 1 ? "" : "s"}`);
   };
 
   return (
@@ -122,7 +103,11 @@ const GameDetails = () => {
         <section className="grid gap-8 lg:grid-cols-[2fr,1fr]">
           <Card className="overflow-hidden">
             <div className="h-64 w-full bg-muted flex items-center justify-center">
-              <span className="text-muted-foreground">Cover art placeholder</span>
+              <img
+                src={game.coverImage}
+                alt={`${game.title} cover art`}
+                className="h-full w-full object-cover"
+              />
             </div>
             <CardHeader className="gap-3">
               <div>
@@ -168,17 +153,59 @@ const GameDetails = () => {
               <CardTitle>Tracking</CardTitle>
               <CardDescription>Keep this game up to date</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <Button onClick={handleAddToBacklog} variant="outline">
-                Add to backlog
-              </Button>
-              <Button onClick={handleStartPlaying} variant="outline">
-                Mark as playing
-              </Button>
-              <Button onClick={handleComplete} variant="outline">
-                Mark as completed
-              </Button>
-              <Button onClick={handleLogSession}>Log 45 minutes</Button>
+            <CardContent className="flex flex-col gap-4">
+              <div className="space-y-2">
+                <p className="text-xs uppercase text-muted-foreground">Library status</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {libraryStatuses.map((status) => (
+                    <Button
+                      key={status}
+                      type="button"
+                      variant={trackedItem?.status === status ? "default" : "outline"}
+                      onClick={() => handleSetStatus(status)}
+                      disabled={!user}
+                      aria-pressed={trackedItem?.status === status}
+                      className="justify-center"
+                    >
+                      {status}
+                    </Button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Choose one status to decide where this game appears across your library views.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-xs uppercase text-muted-foreground">Log a play session</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    type="number"
+                    min={5}
+                    max={1440}
+                    step={5}
+                    value={sessionMinutes}
+                    onChange={(event) => setSessionMinutes(Number(event.target.value) || 0)}
+                    className="w-28"
+                    disabled={!user}
+                    aria-label="Play session length in minutes"
+                  />
+                  <span className="text-sm text-muted-foreground">minutes</span>
+                  <Button type="button" onClick={handleLogSession} disabled={!user}>
+                    Log session
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Track how long you play this game to build your weekly and lifetime totals.
+                </p>
+              </div>
+
+              {!user && (
+                <Button asChild>
+                  <Link to="/profile">Sign in to update tracking</Link>
+                </Button>
+              )}
+
               {trackedItem && (
                 <div className="rounded-md border border-border/50 p-4 text-sm space-y-2">
                   <p className="text-xs uppercase text-muted-foreground">Current status</p>
@@ -186,7 +213,9 @@ const GameDetails = () => {
                   <Progress value={trackedItem.progress * 100} />
                   <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                     <span>Playtime: {Math.round(trackedItem.playtimeMinutes / 60)} hrs</span>
-                    <span>Last played: {trackedItem.lastPlayedAt ? format(new Date(trackedItem.lastPlayedAt), "MMM d") : "--"}</span>
+                    <span>
+                      Last played: {trackedItem.lastPlayedAt ? format(new Date(trackedItem.lastPlayedAt), "MMM d") : "--"}
+                    </span>
                   </div>
                 </div>
               )}
@@ -197,16 +226,16 @@ const GameDetails = () => {
         <section className="grid gap-4 lg:grid-cols-[2fr,1fr]">
           <Card>
             <CardHeader>
-              <CardTitle>Platform achievements</CardTitle>
+              <CardTitle>GameVault milestones</CardTitle>
               <CardDescription>Milestones apply to your entire GameVault profile.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 text-sm text-muted-foreground">
               <p>
-                Achievements are tracked globally across your library. Visit the achievements hub to log unlocks for
-                library, playtime, and social goals.
+                Achievements are tracked globally across your library. Visit the milestones hub to review automatic
+                unlocks for library size, playtime, and engagement streaks.
               </p>
               <Button asChild variant="outline" size="sm">
-                <Link to="/achievements">Open achievements hub</Link>
+                <Link to="/achievements">Open milestones hub</Link>
               </Button>
             </CardContent>
           </Card>

@@ -49,7 +49,7 @@ const Games = () => {
 
   const handleAddToDefaultList = (gameId: string) => {
     if (!user) {
-      toast.error("Sign in to organise your library");
+      toast.error("Sign in to track games from the catalogue");
       return;
     }
     const backlog = lists.find(
@@ -127,9 +127,23 @@ const Games = () => {
           ) : (
             <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
               {filteredGames.map((game) => {
-                const isTracked = listItems.some((item) => item.gameId === game.id && lists.some((list) => list.id === item.listId && (!!user && list.userId === user.id)));
+                const trackedItem = user
+                  ? listItems.find(
+                      (item) =>
+                        item.gameId === game.id &&
+                        lists.some((list) => list.id === item.listId && list.userId === user.id),
+                    )
+                  : null;
+                const isTracked = Boolean(trackedItem);
                 return (
                   <Card key={game.id} className="flex flex-col overflow-hidden">
+                    <div className="h-40 w-full overflow-hidden bg-muted">
+                      <img
+                        src={game.coverImage}
+                        alt={`${game.title} cover art`}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
                     <CardHeader className="space-y-2">
                       <CardTitle className="flex items-center justify-between text-xl">
                         <Link to={`/game/${game.id}`} className="hover:text-primary">
@@ -158,18 +172,27 @@ const Games = () => {
                           );
                         })}
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        {trackedItem ? `Status: ${trackedItem.status}` : "Not in your library yet"}
+                      </p>
                       <div className="flex w-full items-center justify-between gap-4">
                         <Button asChild variant="ghost" size="sm">
                           <Link to={`/game/${game.id}`}>View details</Link>
                         </Button>
-                        <Button
-                          variant={isTracked ? "outline" : "default"}
-                          size="sm"
-                          className={cn(isTracked && "border-primary/60 text-primary")}
-                          onClick={() => handleAddToDefaultList(game.id)}
-                        >
-                          {isTracked ? "Tracked" : "Add to backlog"}
-                        </Button>
+                        {user ? (
+                          <Button
+                            variant={isTracked ? "outline" : "default"}
+                            size="sm"
+                            className={cn(isTracked && "border-primary/60 text-primary")}
+                            onClick={() => handleAddToDefaultList(game.id)}
+                          >
+                            {isTracked ? "Status updated" : "Set status: Backlog"}
+                          </Button>
+                        ) : (
+                          <Button asChild size="sm">
+                            <Link to="/profile">Sign in to track</Link>
+                          </Button>
+                        )}
                       </div>
                     </CardFooter>
                   </Card>
