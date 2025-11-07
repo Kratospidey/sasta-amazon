@@ -218,18 +218,27 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const emailRedirectTo = isBrowser
       ? (() => {
-          if (!redirectOverride) {
-            return `${window.location.origin}/auth/callback`;
-          }
+          const DEFAULT_PATH = "/auth/callback";
+          const rawTarget = redirectOverride?.trim() || DEFAULT_PATH;
 
-          if (redirectOverride.startsWith("http")) {
-            return redirectOverride;
-          }
+          try {
+            const resolvedUrl = new URL(rawTarget, window.location.origin);
+            const isLocalhost = (hostname: string) =>
+              ["localhost", "127.0.0.1", "0.0.0.0"].includes(hostname);
 
-          const path = redirectOverride.startsWith("/")
-            ? redirectOverride
-            : `/${redirectOverride}`;
-          return `${window.location.origin}${path}`;
+            if (
+              isLocalhost(resolvedUrl.hostname) &&
+              !isLocalhost(window.location.hostname)
+            ) {
+              resolvedUrl.protocol = window.location.protocol;
+              resolvedUrl.hostname = window.location.hostname;
+              resolvedUrl.port = window.location.port;
+            }
+
+            return resolvedUrl.toString();
+          } catch (error) {
+            return `${window.location.origin}${DEFAULT_PATH}`;
+          }
         })()
       : undefined;
 
