@@ -8,7 +8,7 @@ import {
 } from "react";
 
 import { getSupabaseClient } from "@/lib/api/supabaseClient";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { SupabaseClient, User as SupabaseUser } from "@supabase/supabase-js";
 
 export type AuthUser = {
   id: string;
@@ -67,6 +67,13 @@ function mapProfileToAuthUser(profile: any, fallbackEmail: string): AuthUser {
     bio: profile?.bio ?? "",
     privacy: "friends",
   };
+}
+
+function extractDisplayNameFromMetadata(
+  authUser: Pick<SupabaseUser, "user_metadata">
+): string | undefined {
+  const raw = authUser.user_metadata?.display_name;
+  return typeof raw === "string" && raw.trim() ? raw : undefined;
 }
 
 async function ensureProfileForUser(
@@ -155,6 +162,7 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
         const profile = await ensureProfileForUser(supabase, {
           userId: authUser.id,
           email: authUser.email ?? "",
+          displayName: extractDisplayNameFromMetadata(authUser),
         });
 
         if (!cancelled) {
@@ -180,6 +188,7 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
         const profile = await ensureProfileForUser(supabase, {
           userId: authUser.id,
           email: authUser.email ?? "",
+          displayName: extractDisplayNameFromMetadata(authUser),
         });
 
         setUser(
@@ -278,6 +287,7 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
       const profile = await ensureProfileForUser(supabase, {
         userId: authUser.id,
         email: authUser.email ?? email,
+        displayName: extractDisplayNameFromMetadata(authUser),
       });
 
       setUser(
