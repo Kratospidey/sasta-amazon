@@ -205,6 +205,13 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
       throw new Error("Email and password are required");
     }
 
+    const redirectOverride = import.meta.env.VITE_AUTHELIA_REDIRECT_URI;
+    const emailRedirectTo = isBrowser
+      ? redirectOverride && redirectOverride.startsWith("http")
+        ? redirectOverride
+        : `${window.location.origin}${redirectOverride ?? "/auth/callback"}`
+      : undefined;
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -212,6 +219,7 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
         data: {
           display_name: displayName ?? email,
         },
+        emailRedirectTo,
       },
     });
     if (error) throw error;
