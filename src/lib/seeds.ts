@@ -204,6 +204,7 @@ export const defaultTrackerData: TrackerDataSnapshot = {
     { id: "list-backlog", userId: "demo-user", name: "Backlog", type: "default" },
     { id: "list-playing", userId: "demo-user", name: "Playing", type: "default" },
     { id: "list-completed", userId: "demo-user", name: "Completed", type: "default" },
+    { id: "list-dropped", userId: "demo-user", name: "Dropped", type: "default" },
     { id: "list-coop", userId: "demo-user", name: "Co-op Nights", type: "custom" },
   ],
   listItems: [

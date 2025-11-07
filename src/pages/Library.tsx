@@ -11,7 +11,7 @@ import { formatDistanceToNow } from "date-fns";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
-const statusOptions = ["Backlog", "Playing", "Completed"];
+const statusOptions = ["Backlog", "Playing", "Completed", "Dropped"];
 
 const Library = () => {
   const { user } = useAuth();
@@ -39,7 +39,7 @@ const Library = () => {
 
   const handleCreateList = () => {
     if (!user) {
-      toast.error("Sign in to manage lists");
+      toast.error("Sign in to manage your library");
       return;
     }
     const name = window.prompt("List name");
@@ -50,10 +50,15 @@ const Library = () => {
   };
 
   const handleStatusChange = (itemId: string, status: string) => {
-    const destination = userLists.find((list) => list.name === status) ?? activeList;
-    if (!destination) return;
-    updateListItem(itemId, { status, listId: destination.id });
-    toast.success(`Marked as ${status}`);
+    if (!user) {
+      toast.error("Sign in to update statuses");
+      return;
+    }
+    const destinationId =
+      userLists.find((list) => list.name === status)?.id || createList({ userId: user.id, name: status });
+    if (!destinationId) return;
+    updateListItem(itemId, { status, listId: destinationId });
+    toast.success(`Status set to ${status}`);
   };
 
   const handleLogSession = (gameId: string) => {
@@ -79,12 +84,14 @@ const Library = () => {
         <main className="container mx-auto px-4 py-8">
           <Card>
             <CardHeader>
-              <CardTitle>Sign in to manage lists</CardTitle>
-              <CardDescription>Your backlog, playing, and completed lists are available after login.</CardDescription>
+              <CardTitle>Sign in to manage your library</CardTitle>
+              <CardDescription>
+                Track games across Backlog, Playing, Completed, and Dropped statuses once you are logged in.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild>
-                <Link to="/profile">Go to profile</Link>
+                <Link to="/profile">Sign in to manage library</Link>
               </Button>
             </CardContent>
           </Card>
@@ -100,9 +107,10 @@ const Library = () => {
         <div className="flex flex-col gap-6">
           <section className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
-              <h1 className="text-3xl font-bold">My Lists</h1>
+              <h1 className="text-3xl font-bold">Library</h1>
               <p className="text-muted-foreground text-sm">
-                Organise your backlog, track what you are playing, and celebrate the games you have completed.
+                These views filter your games by library status. Switch between Backlog, Playing, Completed, and Dropped to
+                see where everything sits.
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
@@ -128,8 +136,8 @@ const Library = () => {
           <section className="grid gap-6 lg:grid-cols-[280px,1fr]">
             <Card className="h-fit">
               <CardHeader>
-                <CardTitle>Lists</CardTitle>
-                <CardDescription>Select a list to manage games</CardDescription>
+                <CardTitle>Status filters</CardTitle>
+                <CardDescription>Pick a library status or custom list to edit its games.</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col gap-2">
                 {userLists.length === 0 ? (

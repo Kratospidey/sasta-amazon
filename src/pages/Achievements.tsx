@@ -85,12 +85,14 @@ const Achievements = () => {
         <main className="container mx-auto px-4 py-8">
           <Card>
             <CardHeader>
-              <CardTitle>Sign in to view achievements</CardTitle>
-              <CardDescription>Track progress and unlock history once you are logged in.</CardDescription>
+              <CardTitle>Sign in to track achievements</CardTitle>
+              <CardDescription>
+                Unlock personal GameVault milestones—like library size, hours played, and streaks—once you are logged in.
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Button asChild>
-                <Link to="/profile">Access profile</Link>
+                <Link to="/profile">Sign in to manage achievements</Link>
               </Button>
             </CardContent>
           </Card>
@@ -105,9 +107,9 @@ const Achievements = () => {
       <main className="container mx-auto px-4 py-8">
         <div className="flex flex-col gap-6">
           <div>
-            <h1 className="text-3xl font-bold">Achievements</h1>
+            <h1 className="text-3xl font-bold">GameVault milestones</h1>
             <p className="text-muted-foreground text-sm">
-              Track your progress across GameVault and celebrate platform-wide milestones.
+              Track personal goals across your entire library—library size, hours played, engagement streaks, and more.
             </p>
           </div>
 

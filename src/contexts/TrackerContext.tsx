@@ -102,6 +102,7 @@ const DEFAULT_LIST_CONFIG: Record<string, { name: string; type: List["type"] }> 
   backlog: { name: "Backlog", type: "default" },
   playing: { name: "Playing", type: "default" },
   completed: { name: "Completed", type: "default" },
+  dropped: { name: "Dropped", type: "default" },
 };
 
 const normaliseListName = (value: string) => value.trim().toLowerCase();
