@@ -33,7 +33,7 @@ begin
   end if;
 end $$;
 
--- Utility functions for identity mapping.
+-- Utility function for identity mapping (does NOT depend on profiles).
 create or replace function public.current_user_external_id()
 returns text
 language plpgsql
@@ -44,6 +44,7 @@ declare
   _tmp text;
   _uid uuid;
 begin
+  -- Prefer Supabase Auth uid() if present
   begin
     _uid := auth.uid();
   exception when others then
@@ -53,6 +54,7 @@ begin
     return _uid::text;
   end if;
 
+  -- Fallback: JWT subject
   begin
     _tmp := current_setting('request.jwt.claim.sub', true);
   exception when others then
@@ -62,6 +64,7 @@ begin
     return _tmp;
   end if;
 
+  -- Fallback: custom external_id claim (e.g. from upstream OIDC)
   begin
     _ext := current_setting('request.jwt.claims.external_id', true);
   exception when others then
@@ -71,6 +74,23 @@ begin
 end;
 $$;
 
+-- Profiles table aligned with Authelia OIDC identities.
+create table if not exists public.profiles (
+  id uuid primary key default gen_random_uuid(),
+  external_id text not null unique,
+  email text,
+  display_name text,
+  avatar_url text,
+  bio text,
+  role public.user_role not null default 'user',
+  created_at timestamptz not null default timezone('utc', now()),
+  updated_at timestamptz not null default timezone('utc', now())
+);
+
+create index if not exists profiles_external_id_idx on public.profiles (external_id);
+create index if not exists profiles_email_lower_idx on public.profiles (lower(email));
+
+-- Depends on profiles: safe to define AFTER table creation.
 create or replace function public.current_profile_id()
 returns uuid
 language sql
@@ -81,6 +101,7 @@ as $$
   where external_id = public.current_user_external_id();
 $$;
 
+-- Also depends on profiles: define AFTER profiles + current_profile_id.
 create or replace function public.is_admin()
 returns boolean
 language sql
@@ -96,6 +117,7 @@ as $$
   );
 $$;
 
+-- Comments go AFTER functions actually exist.
 comment on function public.current_user_external_id is 'Resolve the current request''s stable external identifier from Supabase Auth or an upstream OIDC provider.';
 comment on function public.current_profile_id is 'Fetch the profile UUID for the active subject (returns null if not provisioned).';
 comment on function public.is_admin is 'True when the current subject is associated with an admin profile.';
@@ -115,6 +137,16 @@ create table if not exists public.profiles (
 
 create index if not exists profiles_external_id_idx on public.profiles (external_id);
 create index if not exists profiles_email_lower_idx on public.profiles (lower(email));
+
+create or replace function public.current_profile_id()
+returns uuid
+language sql
+stable
+as $$
+  select id
+  from public.profiles
+  where external_id = public.current_user_external_id();
+$$;
 
 -- Publishers and platforms.
 create table if not exists public.publishers (
@@ -253,14 +285,14 @@ values ('product-images', 'product-images', false)
 on conflict (id) do update set public = excluded.public;
 
 -- Storage policies ensure only admins or the service role can manipulate product assets directly.
-alter table if exists storage.objects enable row level security;
+-- alter table if exists storage.objects enable row level security;
 
-create policy if not exists "Admins manage product images" on storage.objects
+create policy "Admins manage product images" on storage.objects
   for all
   using (bucket_id = 'product-images' and public.is_admin())
   with check (bucket_id = 'product-images' and public.is_admin());
 
-create policy if not exists "Service role manages product images" on storage.objects
+create policy "Service role manages product images" on storage.objects
   for all
   using (bucket_id = 'product-images' and auth.role() = 'service_role')
   with check (bucket_id = 'product-images' and auth.role() = 'service_role');
@@ -282,123 +314,123 @@ alter table public.reviews enable row level security;
 alter table public.wishlists enable row level security;
 
 -- Policy: admins have full visibility of profiles to support moderation flows.
-create policy if not exists "Admin can read profiles" on public.profiles
+create policy "Admin can read profiles" on public.profiles
   for select
   using (public.is_admin());
 
 -- Policy: individual users may read their own profile row using the Authelia/Supabase subject mapping.
-create policy if not exists "Users can read own profile" on public.profiles
+create policy "Users can read own profile" on public.profiles
   for select
   using (external_id = public.current_user_external_id());
 
 -- Policy: users may update only their own profile metadata.
-create policy if not exists "Users update own profile" on public.profiles
+create policy "Users update own profile" on public.profiles
   for update
   using (external_id = public.current_user_external_id())
   with check (external_id = public.current_user_external_id());
 
 -- Policy: the service role (used by provisioning scripts) can manage any profile.
-create policy if not exists "Service role manages profiles" on public.profiles
+create policy "Service role manages profiles" on public.profiles
   for all
   using (auth.role() = 'service_role')
   with check (auth.role() = 'service_role');
 
 -- Policy: catalog data is publicly readable to power the storefront.
-create policy if not exists "Public can read catalog" on public.games for select using (true);
-create policy if not exists "Public can read publishers" on public.publishers for select using (true);
-create policy if not exists "Public can read platforms" on public.platforms for select using (true);
-create policy if not exists "Public can read categories" on public.categories for select using (true);
-create policy if not exists "Public can read inventory" on public.inventory for select using (true);
+create policy "Public can read catalog" on public.games for select using (true);
+create policy "Public can read publishers" on public.publishers for select using (true);
+create policy "Public can read platforms" on public.platforms for select using (true);
+create policy "Public can read categories" on public.categories for select using (true);
+create policy "Public can read inventory" on public.inventory for select using (true);
 
 -- Policy: only admins can mutate catalog metadata.
-create policy if not exists "Admin manages games" on public.games for all using (public.is_admin()) with check (public.is_admin());
-create policy if not exists "Admin manages publishers" on public.publishers for all using (public.is_admin()) with check (public.is_admin());
-create policy if not exists "Admin manages platforms" on public.platforms for all using (public.is_admin()) with check (public.is_admin());
-create policy if not exists "Admin manages categories" on public.categories for all using (public.is_admin()) with check (public.is_admin());
-create policy if not exists "Admin manages inventory" on public.inventory for all using (public.is_admin()) with check (public.is_admin());
-create policy if not exists "Admin manages game platforms" on public.game_platforms for all using (public.is_admin()) with check (public.is_admin());
-create policy if not exists "Admin manages game categories" on public.game_categories for all using (public.is_admin()) with check (public.is_admin());
-create policy if not exists "Public can read game platforms" on public.game_platforms for select using (true);
-create policy if not exists "Public can read game categories" on public.game_categories for select using (true);
+create policy "Admin manages games" on public.games for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin manages publishers" on public.publishers for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin manages platforms" on public.platforms for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin manages categories" on public.categories for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin manages inventory" on public.inventory for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin manages game platforms" on public.game_platforms for all using (public.is_admin()) with check (public.is_admin());
+create policy "Admin manages game categories" on public.game_categories for all using (public.is_admin()) with check (public.is_admin());
+create policy "Public can read game platforms" on public.game_platforms for select using (true);
+create policy "Public can read game categories" on public.game_categories for select using (true);
 
 -- Policy: shoppers may only view the cart associated with their subject mapping.
-create policy if not exists "Users own their cart" on public.carts
+create policy "Users own their cart" on public.carts
   for select
   using (user_id = public.current_profile_id());
 
 -- Policy: shoppers can create or attach to a cart linked to their identity.
-create policy if not exists "Users insert their cart" on public.carts
+create policy "Users insert their cart" on public.carts
   for insert
   with check (coalesce(user_id, public.current_profile_id()) = public.current_profile_id());
 
 -- Policy: shoppers may update their own cart contents.
-create policy if not exists "Users update their cart" on public.carts
+create policy "Users update their cart" on public.carts
   for update
   using (user_id = public.current_profile_id())
   with check (user_id = public.current_profile_id());
 
 -- Policy: shoppers can discard their cart explicitly.
-create policy if not exists "Users delete their cart" on public.carts
+create policy "Users delete their cart" on public.carts
   for delete
   using (user_id = public.current_profile_id());
 
 -- Policy: cart items inherit ownership from their parent cart.
-create policy if not exists "Users manage their cart items" on public.cart_items
+create policy "Users manage their cart items" on public.cart_items
   for all
   using (exists (select 1 from public.carts c where c.id = cart_id and c.user_id = public.current_profile_id()))
   with check (exists (select 1 from public.carts c where c.id = cart_id and c.user_id = public.current_profile_id()));
 
 -- Policy: shoppers can see their past orders.
-create policy if not exists "Users read their orders" on public.orders
+create policy "Users read their orders" on public.orders
   for select
   using (user_id = public.current_profile_id());
 
 -- Policy: orders may only be created for the authenticated user.
-create policy if not exists "Users manage their orders" on public.orders
+create policy "Users manage their orders" on public.orders
   for insert
   with check (user_id = public.current_profile_id());
 
 -- Policy: payment processors (service role) or admins may update order state.
-create policy if not exists "Service role updates orders" on public.orders
+create policy "Service role updates orders" on public.orders
   for update
   using (auth.role() = 'service_role' or public.is_admin())
   with check (auth.role() = 'service_role' or public.is_admin());
 
 -- Policy: shoppers can read their own order line items.
-create policy if not exists "Users read their order items" on public.order_items
+create policy "Users read their order items" on public.order_items
   for select
   using (exists (select 1 from public.orders o where o.id = order_id and o.user_id = public.current_profile_id()));
 
 -- Policy: order line item inserts must map back to the owner order (used by checkout edge function).
-create policy if not exists "Users manage their order items" on public.order_items
+create policy "Users manage their order items" on public.order_items
   for insert
   with check (exists (select 1 from public.orders o where o.id = order_id and o.user_id = public.current_profile_id()));
 
 -- Policy: trusted automation (service role or admins) can patch order items when reconciling payments.
-create policy if not exists "Service role updates order items" on public.order_items
+create policy "Service role updates order items" on public.order_items
   for all
   using (auth.role() = 'service_role' or public.is_admin())
   with check (auth.role() = 'service_role' or public.is_admin());
 
 -- Policy: reviewers manage only their own ratings content.
-create policy if not exists "Users manage reviews" on public.reviews
+create policy "Users manage reviews" on public.reviews
   for all
   using (user_id = public.current_profile_id())
   with check (user_id = public.current_profile_id());
 
 -- Policy: wishlists are private to each user.
-create policy if not exists "Users manage wishlists" on public.wishlists
+create policy "Users manage wishlists" on public.wishlists
   for all
   using (user_id = public.current_profile_id())
   with check (user_id = public.current_profile_id());
 
 -- Policy: reviews can be displayed publicly alongside game pages.
-create policy if not exists "Public can read reviews" on public.reviews
+create policy "Public can read reviews" on public.reviews
   for select
   using (true);
 
 -- Policy: wishlist visibility is restricted to the owner even for reads.
-create policy if not exists "Public can read wishlists when owner" on public.wishlists
+create policy "Public can read wishlists when owner" on public.wishlists
   for select
   using (user_id = public.current_profile_id());
 
