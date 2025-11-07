@@ -74,12 +74,13 @@ async function ensureProfileForUser(
   supabase: SupabaseClient,
   opts: { userId: string; email: string; displayName?: string }
 ) {
+  const profileSelection =
+    "id, external_id, email, display_name, avatar_url, bio, role, created_at, updated_at";
+
   // RLS + unique(external_id) guarantees at most one row visible
   const { data, error } = await supabase
     .from("profiles")
-    .select(
-      "id, external_id, email, display_name, avatar_url, bio, role, created_at, updated_at"
-    )
+    .select(profileSelection)
     .maybeSingle();
 
   if (error && error.code !== "PGRST116") {
@@ -97,12 +98,27 @@ async function ensureProfileForUser(
       avatar_url: null,
       bio: "",
     })
-    .select(
-      "id, external_id, email, display_name, avatar_url, bio, role, created_at, updated_at"
-    )
+    .select(profileSelection)
     .single();
 
-  if (insertError) throw insertError;
+  if (insertError) {
+    // A trigger might have already provisioned the profile; re-fetch instead of failing hard.
+    if (insertError.code === "23505") {
+      const { data: existing, error: existingError } = await supabase
+        .from("profiles")
+        .select(profileSelection)
+        .maybeSingle();
+
+      if (existingError && existingError.code !== "PGRST116") {
+        throw existingError;
+      }
+
+      if (existing) return existing;
+    }
+
+    throw insertError;
+  }
+
   return inserted;
 }
 
@@ -192,10 +208,20 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      options: {
+        data: {
+          display_name: displayName ?? email,
+        },
+      },
     });
     if (error) throw error;
     const authUser = data.user;
     if (!authUser) return;
+
+    // When email confirmations are enabled the session is null until the user verifies their email.
+    if (!data.session) {
+      return;
+    }
 
     const profile = await ensureProfileForUser(supabase, {
       userId: authUser.id,
