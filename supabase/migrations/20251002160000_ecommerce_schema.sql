@@ -74,7 +74,7 @@ begin
 end;
 $$;
 
--- Profiles table aligned with Authelia OIDC identities.
+-- Profiles table aligned with Supabase Auth identities.
 create table if not exists public.profiles (
   id uuid primary key default gen_random_uuid(),
   external_id text not null unique,
@@ -122,7 +122,7 @@ comment on function public.current_user_external_id is 'Resolve the current requ
 comment on function public.current_profile_id is 'Fetch the profile UUID for the active subject (returns null if not provisioned).';
 comment on function public.is_admin is 'True when the current subject is associated with an admin profile.';
 
--- Profiles table aligned with Authelia OIDC identities.
+-- Profiles table aligned with Supabase Auth identities.
 create table if not exists public.profiles (
   id uuid primary key default gen_random_uuid(),
   external_id text not null unique,
@@ -318,7 +318,7 @@ create policy "Admin can read profiles" on public.profiles
   for select
   using (public.is_admin());
 
--- Policy: individual users may read their own profile row using the Authelia/Supabase subject mapping.
+-- Policy: individual users may read their own profile row using the Supabase subject mapping.
 create policy "Users can read own profile" on public.profiles
   for select
   using (external_id = public.current_user_external_id());

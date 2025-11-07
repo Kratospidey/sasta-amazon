@@ -1,6 +1,6 @@
 -- Seed data for the Sasta Amazon game store reference environment.
 
--- Provision baseline profiles for local testing (maps to Authelia subjects admin-dev / user-dev).
+-- Provision baseline profiles for local testing (maps to Supabase Auth user IDs admin-dev / user-dev).
 insert into public.profiles (external_id, email, display_name, role)
 values
   ('admin-dev', 'admin@example.com', 'Admin Dev', 'admin'),

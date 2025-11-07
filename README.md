@@ -6,7 +6,7 @@ This repository now bundles a Supabase-backed ecommerce backend for the game mar
 
 - **Frontend** – Vite SPA (React, TypeScript, shadcn-ui, Tailwind CSS)
 - **Database** – Supabase Postgres with `pg_trgm` enabled for fuzzy search
-- **Auth** – Authelia OIDC (external identity) with optional Supabase Auth fallback
+- **Auth** – Supabase Auth (email/password with optional email confirmation)
 - **Storage** – Supabase Storage (private `product-images` bucket)
 - **Serverless** – Supabase Edge Functions (Deno) for checkout, admin tooling, and storage utilities
 
@@ -19,10 +19,6 @@ Create `.env.local` (used by Vite and the Supabase CLI scripts). The following v
 | `VITE_SUPABASE_URL` | Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anonymous API key (used in the SPA) |
 | `VITE_SUPABASE_EMAIL_REDIRECT_TO` | Optional override for Supabase email confirmations (absolute URL or path) |
-| `VITE_AUTHELIA_ISSUER` | Base URL of the Authelia OIDC issuer |
-| `VITE_AUTHELIA_CLIENT_ID` | Authelia OIDC client ID registered for this SPA |
-| `VITE_AUTHELIA_REDIRECT_URI` | Optional override for the callback path (defaults to `/auth/callback`) |
-| `VITE_AUTHELIA_SCOPE` | Requested scopes (defaults to `openid profile email`) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Required when deploying/running Edge Functions locally |
 | `SUPABASE_DB_URL` | Postgres connection string used by Edge Functions for transactions (falls back to `DATABASE_URL`) |
 | `CHECKOUT_WEBHOOK_SECRET` | Shared secret required when calling the checkout webhook function |
@@ -59,19 +55,15 @@ npx supabase link --project-ref <your-project-ref>
 npm run dev:db:push
 ```
 
-## Authelia identity mapping & roles
+## Supabase identity mapping & roles
 
-Supabase stores user metadata in `public.profiles`. Every row has a stable `external_id` that should match the subject (`sub`) claim provided by Authelia. When a user signs in via OIDC:
+Supabase stores user metadata in `public.profiles`. Every row has a stable `external_id` that matches the Supabase Auth user ID. Database policies compare `profiles.external_id` against `auth.uid()` via the helper function `public.current_user_external_id()`.
 
-1. Authelia issues a JWT to the SPA.
-2. The SPA forwards the JWT to Supabase via the `Authorization: Bearer <token>` header.
-3. Database policies compare `profiles.external_id` against `request.jwt().sub` (or `auth.uid()` when Supabase Auth is used) via the helper function `public.current_user_external_id()`.
-
-To provision a user profile, insert a row with the matching subject. Promote an account to admin by setting `role = 'admin'` for the desired `external_id`:
+To promote an account to admin, update the corresponding profile row:
 
 ```sql
 insert into public.profiles (external_id, email, display_name, role)
-values ('my-oidc-sub', 'admin@example.com', 'Ops Admin', 'admin')
+values ('my-supabase-user-id', 'admin@example.com', 'Ops Admin', 'admin')
 on conflict (external_id) do update set role = excluded.role;
 ```
 
@@ -81,7 +73,7 @@ Admin-only mutations (catalog CRUD, inventory management, product uploads) requi
 
 | Feature | Notes |
 | --- | --- |
-| **Row Level Security** | Enabled across all user-facing tables. Policies respect Authelia subjects via helper functions so the same schema works with Supabase Auth or external OIDC providers. |
+| **Row Level Security** | Enabled across all user-facing tables. Policies rely on Supabase Auth identities via helper functions. |
 | **Catalog schema** | Tables for games, publishers, platforms, categories, inventory, carts, orders, order items, reviews, and wishlists with appropriate constraints and indexes (including trigram search on titles). |
 | **Storage** | Private `product-images` bucket. Admins (or the service role) can manage content. Clients obtain signed URLs via an Edge Function. |
 | **Seeds** | Demo catalog data and baseline profiles in `supabase/seed/seed.sql`. |
@@ -163,4 +155,3 @@ Pull requests automatically validate migrations via GitHub Actions. The workflow
 ## Additional references
 
 - [Supabase CLI docs](https://supabase.com/docs/reference/cli) for linking, pushing, and managing functions
-- [Authelia OIDC documentation](https://www.authelia.com/docs/integration/openid-connect/introduction/) for configuring identity providers

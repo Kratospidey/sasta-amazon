@@ -1,4 +1,4 @@
--- Profiles store metadata for authenticated Authelia users.
+-- Profiles store metadata for authenticated Supabase users.
 create table if not exists public.profiles (
   id text primary key,
   email text,
@@ -18,5 +18,5 @@ create table if not exists public.tracker_snapshots (
   updated_at timestamptz not null default timezone('utc', now())
 );
 
-comment on table public.profiles is 'Profile metadata for users authenticated via Authelia.';
+comment on table public.profiles is 'Profile metadata for users authenticated via Supabase.';
 comment on table public.tracker_snapshots is 'Latest synced tracker data for each profile.';

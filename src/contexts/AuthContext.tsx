@@ -37,7 +37,6 @@ export type AuthContextValue = {
   // kept for API compatibility; no-ops in Supabase/local modes
   beginLogin: (options?: { redirectTo?: string }) => Promise<void>;
   completeLogin: (params: URLSearchParams) => Promise<void>;
-  usingAuthelia: boolean;
 };
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -354,7 +353,6 @@ const SupabaseAuthProvider = ({ children }: { children: React.ReactNode }) => {
       updateProfile,
       beginLogin,
       completeLogin,
-      usingAuthelia: false,
     }),
     [
       user,
@@ -527,7 +525,6 @@ const LocalAuthProvider = ({ children }: { children: React.ReactNode }) => {
       updateProfile,
       beginLogin,
       completeLogin,
-      usingAuthelia: false,
     }),
     [
       user,
